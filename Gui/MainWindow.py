@@ -1,13 +1,13 @@
 import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout, QGridLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider, QLineEdit
-from PyQt5.Qt import Qt, QFont, QColor
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
+from PyQt5.QtWidgets import QCheckBox, QSlider
+from PyQt5.Qt import Qt, QFont
 
-from utils import gui
-from gui.MapWidget import MapWidget
-
+from Gui.Utils import createLabel
+from Common.Format import secondsToTime
+from Gui.MapWidget import MapWidget
 
 
 class MainWindow(QMainWindow):
@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('ToMCAT Visualizer')
-        self.setFixedSize(1500, 1000)
+        self.setFixedSize(1800, 1000)
         self._centralWidget = QWidget(self)
         self.setCentralWidget(self._centralWidget)
 
@@ -27,19 +27,21 @@ class MainWindow(QMainWindow):
         self._configureLayout()
 
     def _createWidgets(self):
-        self._trialLabel = gui.createLabel("T00001", self._regularLabelFont)
-        self._teamLabel = gui.createLabel("TM00063", self._regularLabelFont)
+        self._trialLabel = createLabel("T00001", self._regularLabelFont)
+        self._teamLabel = createLabel("TM00063", self._regularLabelFont)
 
-        self._scoreLabel = gui.createLabel("250", self._regularLabelFont)
+        self._scoreLabel = createLabel("250", self._regularLabelFont)
         self._perturbationCheckbox = QCheckBox()
         self._perturbationCheckbox.setEnabled(False)
-        self._redPlayerLabel = gui.createLabel("P00432", self._boldLabelFont, "red", Qt.AlignCenter)
-        self._greenPlayerLabel = gui.createLabel("P00433", self._boldLabelFont, "green", Qt.AlignCenter)
-        self._bluePlayerLabel = gui.createLabel("P00431", self._boldLabelFont, "blue", Qt.AlignCenter)
+        self._redPlayerLabel = createLabel("P00432", self._boldLabelFont, "red", Qt.AlignCenter)
+        self._greenPlayerLabel = createLabel("P00433", self._boldLabelFont, "green", Qt.AlignCenter)
+        self._bluePlayerLabel = createLabel("P00431", self._boldLabelFont, "blue", Qt.AlignCenter)
 
-        self._map_widget = MapWidget()
+        self._map_widget = MapWidget("../data/post_processed/map_grid.txt")
 
-        self._timerField = QLineEdit("0:00")
+        # self._timerField = QLineEdit("00:00")
+        self._timerField = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
+        self._timerField.setEnabled(False)
 
     def _configureLayout(self):
         sidePanelLayout = QHBoxLayout()
@@ -47,8 +49,8 @@ class MainWindow(QMainWindow):
         leftPanelLayout = QVBoxLayout()
         rightPanelLayout = QVBoxLayout()
 
-        sidePanelLayout.addLayout(leftPanelLayout, 75)
-        sidePanelLayout.addLayout(rightPanelLayout, 25)
+        sidePanelLayout.addLayout(leftPanelLayout, 80)
+        sidePanelLayout.addLayout(rightPanelLayout, 20)
 
         # Widgets on the left side of the window
         self._createTrialInfoPanel(leftPanelLayout)
@@ -69,8 +71,8 @@ class MainWindow(QMainWindow):
         layout = QFormLayout()
         layout.setLabelAlignment(Qt.AlignLeft)
         layout.setFormAlignment(Qt.AlignLeft)
-        layout.addRow(gui.createLabel("Trial:", self._boldLabelFont), self._trialLabel)
-        layout.addRow(gui.createLabel("Team:", self._boldLabelFont), self._teamLabel)
+        layout.addRow(createLabel("Trial:", self._boldLabelFont), self._trialLabel)
+        layout.addRow(createLabel("Team:", self._boldLabelFont), self._teamLabel)
         parentLayout.addLayout(layout, 5)
 
     def _createScorePanel(self, parentLayout: QLayout):
@@ -81,9 +83,9 @@ class MainWindow(QMainWindow):
         upper_info = QHBoxLayout()
         upper_info.setAlignment(Qt.AlignCenter)
         score_layout = QFormLayout()
-        score_layout.addRow(gui.createLabel("Score:", self._boldLabelFont), self._scoreLabel)
+        score_layout.addRow(createLabel("Score:", self._boldLabelFont), self._scoreLabel)
         perturbation_layout = QFormLayout()
-        perturbation_layout.addRow(gui.createLabel("Perturbation:", self._boldLabelFont), self._perturbationCheckbox)
+        perturbation_layout.addRow(createLabel("Perturbation:", self._boldLabelFont), self._perturbationCheckbox)
         upper_info.addLayout(score_layout)
         upper_info.addLayout(perturbation_layout)
         centerInfoLayout.addLayout(upper_info)
@@ -102,7 +104,7 @@ class MainWindow(QMainWindow):
         parentLayout.addLayout(layout, 5)
 
     def _createMapPanel(self, parentLayout: QLayout):
-        parentLayout.addWidget(self._map_widget, 75)
+        parentLayout.addWidget(self._map_widget, 80)
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
@@ -114,10 +116,10 @@ class MainWindow(QMainWindow):
 
         sliderWidget.valueChanged.connect(self._updateTimer)
 
-        parentLayout.addLayout(layout, 10)
+        parentLayout.addLayout(layout, 5)
 
     def _updateTimer(self, value):
-        self._timerField.setText(f"{value}")
+        self._timerField.setText(secondsToTime(value))
 
     def createWidget(self, color: str):
         widget = QWidget()
