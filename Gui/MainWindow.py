@@ -2,8 +2,8 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider
-from PyQt5.Qt import Qt, QFont
+from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
+from PyQt5.Qt import Qt, QFont, QMenu, QAction
 
 from Gui.Utils import createLabel
 from Common.Format import secondsToTime
@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
 
         self._createWidgets()
         self._configureLayout()
+        self._createMenu()
 
     def _createWidgets(self):
         self._trialLabel = createLabel("T00001", self._regularLabelFont)
@@ -37,7 +38,7 @@ class MainWindow(QMainWindow):
         self._greenPlayerLabel = createLabel("P00433", self._boldLabelFont, "green", Qt.AlignCenter)
         self._bluePlayerLabel = createLabel("P00431", self._boldLabelFont, "blue", Qt.AlignCenter)
 
-        self._map_widget = MapWidget("../data/post_processed/map_grid.txt")
+        self._mapWidget = MapWidget()
 
         # self._timerField = QLineEdit("00:00")
         self._timerField = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
@@ -104,7 +105,7 @@ class MainWindow(QMainWindow):
         parentLayout.addLayout(layout, 5)
 
     def _createMapPanel(self, parentLayout: QLayout):
-        parentLayout.addWidget(self._map_widget, 80)
+        parentLayout.addWidget(self._mapWidget, 80)
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
@@ -114,12 +115,28 @@ class MainWindow(QMainWindow):
         layout.addWidget(sliderWidget, 95)
         layout.addWidget(self._timerField, 5)
 
-        sliderWidget.valueChanged.connect(self._updateTimer)
+        sliderWidget.valueChanged.connect(self._updateTimerAction)
 
         parentLayout.addLayout(layout, 5)
 
-    def _updateTimer(self, value):
+    def _createMenu(self):
+        menuBar = self.menuBar()
+        fileMenu = QMenu("&File", self)
+        openAction = QAction("&Open...", self)
+        openAction.triggered.connect(self._openMapFileAction)
+        fileMenu.addAction(openAction)
+        menuBar.addMenu(fileMenu)
+
+    # Actions
+    def _updateTimerAction(self, value):
         self._timerField.setText(secondsToTime(value))
+
+    def _openMapFileAction(self, value):
+        options = QFileDialog.Options()
+        filepath, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
+                                                  "Grid Map File (*.txt)", options=options)
+        self._mapWidget.gridFilepath = filepath
+        self._mapWidget.update()
 
     def createWidget(self, color: str):
         widget = QWidget()
@@ -128,10 +145,9 @@ class MainWindow(QMainWindow):
 
         return widget
 
+
 if __name__ == '__main__':
     app = QApplication([])
     window = MainWindow()
     window.show()
     app.exec()
-
-

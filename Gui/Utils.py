@@ -14,3 +14,4 @@ def drawBlock(painter: QPainter, x: int, y: int, block_size: int, color: Qt):
     painter.setPen(QPen(color, 1, Qt.SolidLine))
     painter.setBrush(QBrush(color, Qt.SolidPattern))
     painter.drawRect(x * block_size, y * block_size, block_size, block_size)
+

@@ -1,3 +1,6 @@
+import os
+
+import numpy as np
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.Qt import QFont, Qt, QPainter
@@ -5,14 +8,11 @@ from PyQt5.Qt import QFont, Qt, QPainter
 from Gui.Utils import createLabel, drawBlock
 from PreProcessing.MapParser import MapParser
 
-import numpy as np
-
-
 class MapWidget(QWidget):
 
-    def __init__(self, gridFilepath: str, showGrid: bool = False, blockSize: int = 10):
+    def __init__(self, gridFilepath: str = None, showGrid: bool = False, blockSize: int = 10):
         super().__init__()
-        self._gridFilepath = gridFilepath
+        self.gridFilepath = gridFilepath
         self._showGrid = showGrid
         self._blockSize = blockSize
         self._painter = QPainter()
@@ -31,7 +31,10 @@ class MapWidget(QWidget):
     #                  self._block_size * (self._map_bounds.height() + 2) + self.margin)
 
     def _drawStaticBlocks(self):
-        grid = np.loadtxt(self._gridFilepath, dtype=np.int8)
+        if self.gridFilepath is None or not os.path.exists(self.gridFilepath):
+            return
+
+        grid = np.loadtxt(self.gridFilepath, dtype=np.int8)
 
         for i in range(grid.shape[0]):
             for j in range(grid.shape[1]):
