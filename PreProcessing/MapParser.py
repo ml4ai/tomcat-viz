@@ -15,17 +15,22 @@ class MapParser:
     def __init__(self, mapFilepath: str, blocksFilepath: str):
         self._mapFilepath = mapFilepath
         self._blocksFilepath = blocksFilepath
-        self._mapGrid = np.array([])
+
+        self._metadata = {}
+        self._gridMap = np.array([])
 
     def save(self, outDir: str):
-        if not os.path.exists(outDir):
-            os.makedirs(outDir)
-        np.savetxt(f"{outDir}/map_grid.txt", self._mapGrid, fmt="%i")
+        os.makedirs(outDir, exist_ok=True)
+
+        with open(os.path.join(outDir, "metadata.json"), "w") as f:
+            json.dump(self._metadata, f, indent=4, sort_keys=True)
+
+        np.savetxt(os.path.join(outDir, "grid_map.txt"), self._gridMap, fmt="%i")
 
     def parse(self) -> np.ndarray:
         wallBlocks, doorBlocks = self._getStaticBlocks()
 
-        # Get map bounds
+        # Get map bounds and add to the metadata file
         minX = None
         minY = None
         maxX = None
@@ -35,16 +40,20 @@ class MapParser:
             minY = block.y if minY is None else min(minY, block.y)
             maxX = block.x if maxX is None else max(maxX, block.x)
             maxY = block.y if maxY is None else max(maxY, block.y)
+        self._metadata["min_x"] = minX
+        self._metadata["min_y"] = minY
+        self._metadata["max_x"] = maxX
+        self._metadata["max_y"] = maxY
 
         width = maxX - minX + 1
         height = maxY - minY + 1
-        self._mapGrid = np.zeros((height, width), dtype=np.int8)
+        self._gridMap = np.zeros((height, width), dtype=np.int8)
 
         for block in wallBlocks:
-            self._mapGrid[block.y - minY][block.x - minX] = MapParser.WALL
+            self._gridMap[block.y - minY][block.x - minX] = MapParser.WALL
 
         for block in doorBlocks:
-            self._mapGrid[block.y - minY][block.x - minX] = MapParser.DOOR
+            self._gridMap[block.y - minY][block.x - minX] = MapParser.DOOR
 
     def _getStaticBlocks(self) -> Tuple[Set[Block], Set[Block]]:
         with open(self._mapFilepath, 'r') as f:

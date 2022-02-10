@@ -12,6 +12,9 @@ from Gui.MapWidget import MapWidget
 
 class MainWindow(QMainWindow):
 
+    LEFT_PANEL_PROP = 80
+    MAP_HEIGHT_PROP = 80
+
     def __init__(self):
         super().__init__()
 
@@ -38,11 +41,12 @@ class MainWindow(QMainWindow):
         self._greenPlayerLabel = createLabel("P00433", self._boldLabelFont, "green", Qt.AlignCenter)
         self._bluePlayerLabel = createLabel("P00431", self._boldLabelFont, "blue", Qt.AlignCenter)
 
-        self._mapWidget = MapWidget()
+        mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
+        mapHeight = int(self.height() * MainWindow.MAP_HEIGHT_PROP / 100)
+        self._mapWidget = MapWidget(mapWidth, mapHeight)
 
-        # self._timerField = QLineEdit("00:00")
-        self._timerField = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
-        self._timerField.setEnabled(False)
+        self._timerLabel = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
+        self._timerLabel.setEnabled(False)
 
     def _configureLayout(self):
         sidePanelLayout = QHBoxLayout()
@@ -50,8 +54,8 @@ class MainWindow(QMainWindow):
         leftPanelLayout = QVBoxLayout()
         rightPanelLayout = QVBoxLayout()
 
-        sidePanelLayout.addLayout(leftPanelLayout, 80)
-        sidePanelLayout.addLayout(rightPanelLayout, 20)
+        sidePanelLayout.addLayout(leftPanelLayout, MainWindow.LEFT_PANEL_PROP)
+        sidePanelLayout.addLayout(rightPanelLayout, 100 - MainWindow.LEFT_PANEL_PROP)
 
         # Widgets on the left side of the window
         self._createTrialInfoPanel(leftPanelLayout)
@@ -105,7 +109,7 @@ class MainWindow(QMainWindow):
         parentLayout.addLayout(layout, 5)
 
     def _createMapPanel(self, parentLayout: QLayout):
-        parentLayout.addWidget(self._mapWidget, 80)
+        parentLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
@@ -113,7 +117,7 @@ class MainWindow(QMainWindow):
         sliderWidget.setRange(0, 899)
         sliderWidget.setSingleStep(1)
         layout.addWidget(sliderWidget, 95)
-        layout.addWidget(self._timerField, 5)
+        layout.addWidget(self._timerLabel, 5)
 
         sliderWidget.valueChanged.connect(self._updateTimerAction)
 
@@ -121,22 +125,33 @@ class MainWindow(QMainWindow):
 
     def _createMenu(self):
         menuBar = self.menuBar()
-        fileMenu = QMenu("&File", self)
-        openAction = QAction("&Open...", self)
-        openAction.triggered.connect(self._openMapFileAction)
-        fileMenu.addAction(openAction)
-        menuBar.addMenu(fileMenu)
+
+        mapMenu = QMenu("&Map", self)
+        loadMapMenu = QAction("&Load...", self)
+        loadMapMenu.triggered.connect(self._loadMapAction)
+        mapMenu.addAction(loadMapMenu)
+        menuBar.addMenu(mapMenu)
+
+        self._missionMenu = QMenu("&Mission", self)
+        self._missionMenu.setEnabled(False)
+        loadMissionMenu = QAction("&Load...", self)
+        loadMissionMenu.triggered.connect(self._loadMissionAction)
+        self._missionMenu.addAction(loadMissionMenu)
+        menuBar.addMenu(self._missionMenu)
 
     # Actions
     def _updateTimerAction(self, value):
-        self._timerField.setText(secondsToTime(value))
+        self._timerLabel.setText(secondsToTime(value))
+        self._mapWidget.updateFor(value)
 
-    def _openMapFileAction(self, value):
-        options = QFileDialog.Options()
-        filepath, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "Grid Map File (*.txt)", options=options)
-        self._mapWidget.gridFilepath = filepath
-        self._mapWidget.update()
+    def _loadMapAction(self, value):
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
+        self._mapWidget.loadMap(directory)
+        self._missionMenu.setEnabled(True)
+
+    def _loadMissionAction(self, value):
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
+        self._mapWidget.loadMission(directory)
 
     def createWidget(self, color: str):
         widget = QWidget()
