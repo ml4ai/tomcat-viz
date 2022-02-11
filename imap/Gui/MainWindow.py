@@ -2,10 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, QWidget
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
+
 from imap.Gui.Utils import createLabel
 from imap.Common.Format import secondsToTime
 from imap.Gui.MapWidget import MapWidget
 from imap.Parser.Map import Map
+from imap.Parser.Trial import Trial
+
 import json
 import os
 import numpy as np
@@ -36,6 +39,9 @@ class MainWindow(QMainWindow):
 
         self._scores = np.array([])
         self._loadDefaultMap()
+
+        self._map = None
+        self._trial = None
 
     def _createWidgets(self):
         self._trialLabel = createLabel("", self._regularLabelFont)
@@ -143,32 +149,32 @@ class MainWindow(QMainWindow):
         self._timerLabel.setText(secondsToTime(value))
         self._mapWidget.updateFor(value)
         if len(self._scores) > value:
-            self._scoreLabel.setText(f"{self._scores[value]}")
+            self._scoreLabel.setText(f"{self._trial.scores[value]}")
 
     def _loadMissionAction(self, value):
-        directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
+        filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]
+        with open(filepath, "r") as f:
+            self._trial = Trial(self._map)
+            self._trial.parse(f)
         self._timeSlider.setValue(0)
         self._timeSlider.setEnabled(True)
-        self._scores = np.loadtxt(os.path.join(directory, "scores.txt"), dtype=np.int16)
-        self._fillHeaderInfo(directory)
-        self._mapWidget.loadMission(directory)
+        self._fillHeaderInfo()
+        self._mapWidget.loadTrial(self._trial)
 
-    def _fillHeaderInfo(self, missionDir: str):
-        with open(os.path.join(missionDir, "metadata.json"), "r") as f:
-            metadata = json.load(f)
-        self._trialLabel.setText(metadata["trial_number"])
-        self._teamLabel.setText(metadata["team_number"])
-        self._redPlayerLabel.setText(metadata["red_id"])
-        self._greenPlayerLabel.setText(metadata["green_id"])
-        self._bluePlayerLabel.setText(metadata["blue_id"])
+    def _fillHeaderInfo(self):
+        self._trialLabel.setText(self._trial.metadata["trial_number"])
+        self._teamLabel.setText(self._trial.metadata["team_number"])
+        self._redPlayerLabel.setText(self._trial.metadata["red_id"])
+        self._greenPlayerLabel.setText(self._trial.metadata["green_id"])
+        self._bluePlayerLabel.setText(self._trial.metadata["blue_id"])
 
     def _loadDefaultMap(self):
         objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.1_3D_sm_v1.0.json")
         utf8_reader = codecs.getreader("utf-8")
         jsonMap = json.load(utf8_reader(objects_resource))
-        mapObject = Map()
-        mapObject.parse(jsonMap)
-        self._mapWidget.loadMap(mapObject)
+        self._map = Map()
+        self._map.parse(jsonMap)
+        self._mapWidget.loadMap(self._map)
 
     def createWidget(self, color: str):
         widget = QWidget()

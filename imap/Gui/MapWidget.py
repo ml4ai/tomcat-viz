@@ -1,22 +1,18 @@
 import os
 from enum import Enum
 from typing import List, Tuple
-
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.Qt import QFont, Qt, QPainter, QImage, QSize, QGraphicsView, QGraphicsScene, QGraphicsItem, QPainterPath, \
-    QLineF, QPen
 import numpy as np
 import json
-import pickle
-import copy
 import csv
 from pkg_resources import resource_stream
 import codecs
 
-from imap.Gui.Utils import drawBlock, drawCircle, drawLine, drawWall
+from PyQt5.QtWidgets import QWidget
+from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen
+
 from imap.Gui.CustomScene import CustomScene
 from imap.Parser.Map import Map
+from imap.Parser.Trial import Trial
 
 
 class MapWidget(QWidget):
@@ -33,9 +29,8 @@ class MapWidget(QWidget):
         self._view = QGraphicsView(self._scene, self)
 
         self._map = None
+        self._trial = None
 
-        self._missionMetadata = None
-        self._playersPositions = None
         self._lastDrawnTimeStep = -1
 
         # Stores objects draw per time step
@@ -48,20 +43,11 @@ class MapWidget(QWidget):
         self._scene.clear()
         self._drawWallsAndDoors()
 
-    def loadMission(self, missionDir: str):
-        if os.path.exists(missionDir):
-            with open(os.path.join(missionDir, "metadata.json"), "r") as f:
-                self._missionMetadata = json.load(f)
-
-            self._playersPositions = [
-                np.loadtxt(os.path.join(missionDir, "positions_red.txt")),
-                np.loadtxt(os.path.join(missionDir, "positions_green.txt")),
-                np.loadtxt(os.path.join(missionDir, "positions_blue.txt")),
-            ]
-
-            self._drawInitialVictimsAndRubbles()
-            self._placePlayersInTheMap()
-            self._lastDrawnTimeStep = 0
+    def loadTrial(self, trial: Trial):
+        self._trial = trial
+        self._drawInitialVictimsAndRubbles()
+        self._placePlayersInTheMap()
+        self._lastDrawnTimeStep = 0
 
     def updateFor(self, timeStep: int):
         if timeStep > self._lastDrawnTimeStep:
@@ -89,7 +75,7 @@ class MapWidget(QWidget):
                     self._scene.drawEmptyBlock(j, i, self._blockSize, self._blockSize)
 
     def _drawInitialVictimsAndRubbles(self):
-        objects_resource = resource_stream("imap.Resources.Maps", self._missionMetadata["map_block_filename"])
+        objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
         for i, row in enumerate(csv_reader):
@@ -150,7 +136,7 @@ class MapWidget(QWidget):
 
     def _getPlayersPositionsAt(self, time_step: int) -> List[Tuple[float, float]]:
         positions = []
-        for positionPerPlayer in self._playersPositions:
+        for positionPerPlayer in self._trial.playersPositions:
             position = positionPerPlayer[time_step]
             positions.append(self._translatePosition(position[0], position[1]))
 
