@@ -6,7 +6,7 @@ from dateutil.parser import parse
 import numpy as np
 import pickle
 
-from PreProcessing.Utils import isMessageOf
+from imap.PreProcessing.Utils import isMessageOf
 
 
 class MissionParser:

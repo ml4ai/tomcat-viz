@@ -18,7 +18,9 @@ def drawBlock(scene: QGraphicsScene, x: float, y: float, scale: int, block_size:
 def drawWall(scene: QGraphicsScene, x: float, y: float, scale: int, block_size: int) -> QGraphicsItem:
     pen = QPen(Qt.lightGray, 1, Qt.SolidLine)
     brush = QBrush(Qt.gray, Qt.SolidPattern)
-    return scene.addRect(x * scale, y * scale, block_size, block_size, pen, brush)
+    rect = scene.addRect(x * scale, y * scale, block_size, block_size, pen, brush)
+    scene.addText("v", QFont('Arial', 11)).setPos((x - 0.2) * scale, (y - 0.55) * scale)
+    return rect
 
 def drawCircle(scene: QGraphicsScene, x: float, y: float, scale: int, diameter: int, color: Qt) -> QGraphicsItem:
     pen = QPen(color, 1, Qt.SolidLine)

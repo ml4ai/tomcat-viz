@@ -4,7 +4,7 @@ import os
 import json
 import numpy as np
 
-from PreProcessing.Block import Block
+from imap.PreProcessing.Block import Block
 
 
 class MapParser:

@@ -10,9 +10,13 @@ import numpy as np
 import json
 import pickle
 import copy
+import csv
+from pkg_resources import resource_stream
+import codecs
 
-from Gui.Utils import drawBlock, drawCircle, drawLine, drawWall
-from PreProcessing.MapParser import MapParser
+from imap.Gui.Utils import drawBlock, drawCircle, drawLine, drawWall
+from imap.Gui.CustomScene import CustomScene
+from imap.PreProcessing.MapParser import MapParser, Block
 
 
 class MapWidget(QWidget):
@@ -20,26 +24,22 @@ class MapWidget(QWidget):
         NEXT = 0
         PREVIOUS = 1
 
-    def __init__(self, width: int, height: int, showGrid: bool = False, blockSize: int = 10, playerSize: int = 8):
+    def __init__(self, width: int, height: int, blockSize: int = 10, playerSize: int = 8):
         super().__init__()
-        self._showGrid = showGrid
         self._blockSize = blockSize
         self._playerSize = playerSize
 
-        self._scene = QGraphicsScene(0, 0, width, height)
-        self._scene.setBackgroundBrush(Qt.white)
+        self._scene = CustomScene(0, 0, width, height, Qt.white)
         self._view = QGraphicsView(self._scene, self)
 
         self._mapMetadata = None
 
         self._missionMetadata = None
         self._playersPositions = None
-        self._scores = None
         self._lastDrawnTimeStep = -1
 
         # Stores objects draw per time step
         self._currPlayersBlocks = []
-        # self._trajectories = []
         self._playersPaths = []
         self._playersPathItems = []
 
@@ -69,9 +69,8 @@ class MapWidget(QWidget):
         if timeStep > self._lastDrawnTimeStep:
             for t in range(self._lastDrawnTimeStep + 1, timeStep + 1):
                 self._erasePlayersBlocks()
-                previous_positions = self._getPlayersPositionsAt(t - 1)
                 positions = self._getPlayersPositionsAt(t)
-                self._drawTrajectories(previous_positions, positions)
+                self._drawTrajectories(positions)
                 self._drawPlayers(positions)
         else:
             for t in range(self._lastDrawnTimeStep - 1, timeStep - 1, -1):
@@ -81,46 +80,39 @@ class MapWidget(QWidget):
                 self._drawPlayers(positions)
         self._lastDrawnTimeStep = timeStep
 
-    # def paintEvent(self, event):
-    #     if self._backgroundCanvas is not None:
-    #         canvasPainter = QPainter(self)
-    #         # canvasPainter.drawImage(self.rect(), self._backgroundCanvas, self._backgroundCanvas.rect())
-    #         canvasPainter.drawRect(20, 20, 10, 10)
-
-    # canvasPainter = QPainter(self._backgroundCanvas)
-    # canvasPainter.drawImage(self._backgroundCanvas.rect(), self._foregroundCanvas, self._foregroundCanvas.rect())
-
-    # self._painter.begin(self)
-    # self._drawWallsAndDoors()
-    # if self._missionMetadata:
-    #     if self._currentTimeStep < 0:
-    #
-    #         self._drawInitialVictimsAndRubbles()
-    #
-    #     self._updateMap()
-    #
-    # # if self._show_grid:
-    # #     draw_grid(self._map_bounds.x1 * self._block_size, self._map_bounds.y1 * self._block_size,
-    # #               self._map_bounds.x2 * self._block_size, self._map_bounds.y2 * self._block_size,
-    # #               self._block_size)
-    # self._painter.end()
-
-    # def minimumSizeHint(self):
-    #     return QSize(self._block_size * self._map_bounds.width() + self.margin,
-    #                  self._block_size * (self._map_bounds.height() + 2) + self.margin)
-
     def _drawWallsAndDoors(self, gridMap: np.ndarray):
         for i in range(gridMap.shape[0]):
             for j in range(gridMap.shape[1]):
                 if gridMap[i][j] == MapParser.WALL:
-                    drawWall(self._scene, j, i, self._blockSize, self._blockSize)
+                    self._scene.drawWall(j, i, self._blockSize, self._blockSize)
                 elif gridMap[i][j] == MapParser.DOOR:
-                    drawBlock(self._scene, j, i, self._blockSize, self._blockSize, Qt.magenta)
+                    self._scene.drawDoor(j, i, self._blockSize, self._blockSize)
                 else:
-                    drawBlock(self._scene, j, i, self._blockSize, self._blockSize, Qt.white)
+                    self._scene.drawEmptyBlock(j, i, self._blockSize, self._blockSize)
 
     def _drawInitialVictimsAndRubbles(self):
-        pass
+        objects_resource = resource_stream("imap.resources.maps", self._missionMetadata["map_block_filename"])
+        utf8_reader = codecs.getreader("utf-8")
+        csv_reader = csv.reader(utf8_reader(objects_resource))
+        for i, row in enumerate(csv_reader):
+            if i == 0:
+                # Skip header
+                continue
+
+            coordinates = row[0].split()
+            x, y = self._translatePosition(int(coordinates[0]), int(coordinates[2]))
+            if row[1] == "block_signal_victim":
+                self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
+            elif row[1] == "gravel":
+                self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
+            elif row[1] == "block_victim_1":
+                self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
+            elif row[1] == "block_victim_1b":
+                self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
+            elif row[1] == "block_victim_proximity":
+                self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
+            elif row[1] == "block_rubble_collapse":
+                self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
 
     def _placePlayersInTheMap(self):
         positions = self._getPlayersPositionsAt(0)
@@ -152,11 +144,11 @@ class MapWidget(QWidget):
 
     def _drawPlayers(self, positions: List[Tuple[float, float]]):
         self._currPlayersBlocks.append(
-            drawCircle(self._scene, *positions[0], self._blockSize, self._playerSize, Qt.red))
+            self._scene.drawRed(*positions[0], self._blockSize, self._playerSize))
         self._currPlayersBlocks.append(
-            drawCircle(self._scene, *positions[1], self._blockSize, self._playerSize, Qt.green))
+            self._scene.drawGreen(*positions[1], self._blockSize, self._playerSize))
         self._currPlayersBlocks.append(
-            drawCircle(self._scene, *positions[2], self._blockSize, self._playerSize, Qt.blue))
+            self._scene.drawBlue(*positions[2], self._blockSize, self._playerSize))
 
     def _getPlayersPositionsAt(self, time_step: int) -> List[Tuple[float, float]]:
         positions = []
@@ -171,7 +163,7 @@ class MapWidget(QWidget):
             self._scene.removeItem(item)
         self._currPlayersBlocks = []
 
-    def _drawTrajectories(self, previous_positions: List[Tuple[float, float]], positions: List[Tuple[float, float]]):
+    def _drawTrajectories(self, positions: List[Tuple[float, float]]):
         newPaths = []
         for i in range(len(self._playersPathItems)):
             path = QPainterPath(self._playersPaths[-1][i])
@@ -180,28 +172,8 @@ class MapWidget(QWidget):
             self._playersPathItems[i].setPath(path)
         self._playersPaths.append(newPaths)
 
-        # path = self._playersPathItems[0].path()
-        # path.lineTo(self._blockSize * positions[0][0] + 0.5, self._blockSize * positions[0][1] + 0.5)
-        # self._playersPathItems[0].setPath(path)
-        #
-        # # redLine = drawLine(self._scene, previous_positions[0][0] + 0.5, previous_positions[0][1] + 0.5,
-        # #                    positions[0][0] + 0.5, positions[0][1] + 0.5, self._blockSize, Qt.red)
-        # greenLine = drawLine(self._scene, previous_positions[1][0] + 0.5, previous_positions[1][1] + 0.5,
-        #                      positions[1][0] + 0.5, positions[1][1] + 0.5, self._blockSize, Qt.green)
-        # blueLine = drawLine(self._scene, previous_positions[2][0] + 0.5, previous_positions[2][1] + 0.5,
-        #                     positions[2][0] + 0.5, positions[2][1] + 0.5, self._blockSize, Qt.blue)
-        # self._trajectories.append([greenLine, blueLine])
-
     def _popTrajectories(self):
         self._playersPaths.pop()
         for i in range(len(self._playersPathItems)):
             path = self._playersPaths[-1][i]
             self._playersPathItems[i].setPath(path)
-
-        # for item in self._trajectories[-1]:
-        #     self._scene.removeItem(item)
-        # self._trajectories.pop()
-        #
-        # path = self._playersPathItems[0].path()
-        # path.pop()
-        # self._playersPathItems[0].setPath(path)

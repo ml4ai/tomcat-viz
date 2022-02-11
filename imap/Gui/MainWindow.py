@@ -5,9 +5,13 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
 
-from Gui.Utils import createLabel
-from Common.Format import secondsToTime
-from Gui.MapWidget import MapWidget
+from imap.Gui.Utils import createLabel
+from imap.Common.Format import secondsToTime
+from imap.Gui.MapWidget import MapWidget
+
+import json
+import os
+import numpy as np
 
 
 class MainWindow(QMainWindow):
@@ -30,16 +34,18 @@ class MainWindow(QMainWindow):
         self._configureLayout()
         self._createMenu()
 
-    def _createWidgets(self):
-        self._trialLabel = createLabel("T00001", self._regularLabelFont)
-        self._teamLabel = createLabel("TM00063", self._regularLabelFont)
+        self._scores = np.array([])
 
-        self._scoreLabel = createLabel("250", self._regularLabelFont)
+    def _createWidgets(self):
+        self._trialLabel = createLabel("", self._regularLabelFont)
+        self._teamLabel = createLabel("", self._regularLabelFont)
+
+        self._scoreLabel = createLabel("0", self._regularLabelFont)
         self._perturbationCheckbox = QCheckBox()
         self._perturbationCheckbox.setEnabled(False)
-        self._redPlayerLabel = createLabel("P00432", self._boldLabelFont, "red", Qt.AlignCenter)
-        self._greenPlayerLabel = createLabel("P00433", self._boldLabelFont, "green", Qt.AlignCenter)
-        self._bluePlayerLabel = createLabel("P00431", self._boldLabelFont, "blue", Qt.AlignCenter)
+        self._redPlayerLabel = createLabel("", self._boldLabelFont, "red", Qt.AlignCenter)
+        self._greenPlayerLabel = createLabel("", self._boldLabelFont, "green", Qt.AlignCenter)
+        self._bluePlayerLabel = createLabel("", self._boldLabelFont, "blue", Qt.AlignCenter)
 
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
         mapHeight = int(self.height() * MainWindow.MAP_HEIGHT_PROP / 100)
@@ -143,6 +149,8 @@ class MainWindow(QMainWindow):
     def _updateTimerAction(self, value):
         self._timerLabel.setText(secondsToTime(value))
         self._mapWidget.updateFor(value)
+        if len(self._scores) > value:
+            self._scoreLabel.setText(f"{self._scores[value]}")
 
     def _loadMapAction(self, value):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
@@ -151,7 +159,18 @@ class MainWindow(QMainWindow):
 
     def _loadMissionAction(self, value):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
+        self._scores = np.loadtxt(os.path.join(directory, "scores.txt"), dtype=np.int16)
+        self._fillHeaderInfo(directory)
         self._mapWidget.loadMission(directory)
+
+    def _fillHeaderInfo(self, missionDir: str):
+        with open(os.path.join(missionDir, "metadata.json"), "r") as f:
+            metadata = json.load(f)
+        self._trialLabel.setText(metadata["trial_number"])
+        self._teamLabel.setText(metadata["team_number"])
+        self._redPlayerLabel.setText(metadata["red_id"])
+        self._greenPlayerLabel.setText(metadata["green_id"])
+        self._bluePlayerLabel.setText(metadata["blue_id"])
 
     def createWidget(self, color: str):
         widget = QWidget()
@@ -159,10 +178,3 @@ class MainWindow(QMainWindow):
         widget.show()
 
         return widget
-
-
-if __name__ == '__main__':
-    app = QApplication([])
-    window = MainWindow()
-    window.show()
-    app.exec()
