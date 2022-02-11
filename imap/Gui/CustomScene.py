@@ -1,5 +1,7 @@
 from PyQt5.Qt import QGraphicsScene, Qt, QPen, QBrush, QFont, QGraphicsItem
+
 from imap.Gui.StampedRectItem import StampedRectItem
+from imap.Parser.MarkerType import MarkerType
 
 
 class CustomScene(QGraphicsScene):
@@ -42,6 +44,25 @@ class CustomScene(QGraphicsScene):
 
     def drawEmptyBlock(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.white, Qt.white)
+
+    def drawMarker(self, type: MarkerType, x: float, y: float, scale: float, blockSize: float):
+        label = "X"
+        if type == MarkerType.NO_VICTIM:
+            label = "O"
+        elif type == MarkerType.VICTIM_A:
+            label = "A"
+        elif type == MarkerType.VICTIM_B:
+            label = "B"
+        elif type == MarkerType.REGULAR_VICTIM:
+            label = "R"
+        elif type == MarkerType.CRITICAL_VICTIM:
+            label = "C"
+        elif type == MarkerType.THREAT_ROOM:
+            label = "T"
+        elif type == MarkerType.SOS:
+            label = "S"
+
+        return self._drawStampedBlock(label, x, y, scale, blockSize, Qt.black, Qt.black, Qt.white)
 
     def removeItem(self, item: QGraphicsItem) -> None:
         if isinstance(item, StampedRectItem):

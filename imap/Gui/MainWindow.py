@@ -40,7 +40,6 @@ class MainWindow(QMainWindow):
         self._scores = np.array([])
         self._loadDefaultMap()
 
-        self._map = None
         self._trial = None
 
     def _createWidgets(self):

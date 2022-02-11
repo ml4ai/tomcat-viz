@@ -37,6 +37,7 @@ class MapWidget(QWidget):
         self._currPlayersBlocks = []
         self._playersPaths = []
         self._playersPathItems = []
+        self._markerItems = []
 
     def loadMap(self, mapObject: Map):
         self._map = mapObject
@@ -56,12 +57,14 @@ class MapWidget(QWidget):
                 positions = self._getPlayersPositionsAt(t)
                 self._drawTrajectories(positions)
                 self._drawPlayers(positions)
+                self._drawMarkers(timeStep)
         else:
             for t in range(self._lastDrawnTimeStep - 1, timeStep - 1, -1):
                 self._erasePlayersBlocks()
                 self._popTrajectories()
                 positions = self._getPlayersPositionsAt(timeStep)
                 self._drawPlayers(positions)
+                self._popMarkers()
         self._lastDrawnTimeStep = timeStep
 
     def _drawWallsAndDoors(self):
@@ -161,3 +164,14 @@ class MapWidget(QWidget):
         for i in range(len(self._playersPathItems)):
             path = self._playersPaths[-1][i]
             self._playersPathItems[i].setPath(path)
+
+    def _drawMarkers(self, timeStep: int):
+        items = []
+        for marker in self._trial.placedMarkers[timeStep]:
+            items.append(self._scene.drawMarker(marker[0], marker[1], marker[2], self._blockSize, self._blockSize))
+        self._markerItems.append(items)
+
+    def _popMarkers(self):
+        for marker in self._markerItems[-1]:
+            self._scene.removeItem(marker)
+        self._markerItems.pop()

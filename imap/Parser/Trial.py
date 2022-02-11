@@ -6,19 +6,21 @@ import numpy as np
 import pickle
 
 from imap.Parser.Map import Map
+from imap.Parser.MarkerType import MarkerType
 
 
 class Trial:
     NUM_ROLES = 3
     RED = 0
-    GREEN = 0
-    BLUE = 0
+    GREEN = 1
+    BLUE = 2
     USED_TOPICS = [
         "trial",
         "observations/events/mission",
         "observations/state",
         "observations/events/scoreboard",
-        "observations/events/player/role_selected"
+        "observations/events/player/role_selected",
+        "observations/events/player/marker_placed"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -28,6 +30,7 @@ class Trial:
         self.metadata = {}
         self.scores = np.array([])
         self.playersPositions = []
+        self.placedMarkers = []
 
     def save(self, filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -35,7 +38,8 @@ class Trial:
         trialPackage = {
             "metadata": self.metadata,
             "scores": self.scores,
-            "players_positions": self.playersPositions
+            "players_positions": self.playersPositions,
+            "placed_markers": self.placedMarkers
         }
 
         with open(filepath, "wb") as f:
@@ -48,6 +52,7 @@ class Trial:
         self.metadata = trialPackage["metadata"]
         self.scores = trialPackage["scores"]
         self.playersPositions = trialPackage["players_positions"]
+        self.placedMarkers = trialPackage["placed_markers"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -61,10 +66,12 @@ class Trial:
         self.metadata = {}
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Trial.NUM_ROLES)]
+        self.placedMarkers = []
         playerColorToIdx = {"red": 0, "green": 1, "blue": 2}
 
-        score = 0
-        playersPosition = [np.zeros(2), np.zeros(2), np.zeros(2)]
+        currentScore = 0
+        currentPlayersPositions = [np.zeros(2), np.zeros(2), np.zeros(2)]
+        currentPlacedMarkers = []
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -108,23 +115,47 @@ class Trial:
                 playerColor = playerIdToColor[playerId]
                 x = message["data"]["x"]
                 y = message["data"]["z"]
-                playersPosition[playerColorToIdx[playerColor]][0] = x
-                playersPosition[playerColorToIdx[playerColor]][1] = y
+                currentPlayersPositions[playerColorToIdx[playerColor]][0] = x
+                currentPlayersPositions[playerColorToIdx[playerColor]][1] = y
 
             if missionStarted:
                 if Trial._isMessageOf(message, "observation", "Event:Scoreboard"):
-                    score = message["data"]["scoreboard"]["TeamScore"]
+                    currentScore = message["data"]["scoreboard"]["TeamScore"]
+                elif Trial._isMessageOf(message, "event", "Event:MarkerPlaced"):
+                    # We don't care about who placed it for the moment
+                    markerType = message["data"]["type"]
+                    x = message["data"]["marker_x"] - self._map.metadata["min_x"]
+                    y = message["data"]["marker_z"] - self._map.metadata["min_y"]
+
+                    if "novictim" in markerType:
+                        currentPlacedMarkers.append((MarkerType.NO_VICTIM, x, y))
+                    elif "abrasion" in markerType:
+                        currentPlacedMarkers.append((MarkerType.VICTIM_A, x, y))
+                    elif "bonedamage" in markerType:
+                        currentPlacedMarkers.append((MarkerType.VICTIM_B, x, y))
+                    elif "regularvictim" in markerType:
+                        currentPlacedMarkers.append((MarkerType.REGULAR_VICTIM, x, y))
+                    elif "criticalvictim" in markerType:
+                        currentPlacedMarkers.append((MarkerType.CRITICAL_VICTIM, x, y))
+                    elif "threat" in markerType:
+                        currentPlacedMarkers.append((MarkerType.THREAT_ROOM, x, y))
+                    elif "sos" in markerType:
+                        currentPlacedMarkers.append((MarkerType.SOS, x, y))
+
                 elif Trial._isMessageOf(message, "observation", "State"):
                     missionTimer = message["data"]["mission_timer"]
                     elapsedSeconds = self._missionTimerToElapsedSeconds(missionTimer)
 
                     if elapsedSeconds >= nextTimeStep:
                         for t in range(nextTimeStep, elapsedSeconds + 1):
-                            self.scores[t] = score
+                            self.scores[t] = currentScore
+                            self.placedMarkers.append(currentPlacedMarkers)
                             for playerIdx, positions in enumerate(self.playersPositions):
-                                positions[t] = playersPosition[playerIdx]
+                                positions[t] = currentPlayersPositions[playerIdx]
 
                         nextTimeStep = elapsedSeconds + 1
+
+                        currentPlacedMarkers = []
 
                     if nextTimeStep == self._timeSteps:
                         break
