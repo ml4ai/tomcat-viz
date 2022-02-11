@@ -138,11 +138,24 @@ class MainWindow(QMainWindow):
     def _createMenu(self):
         menuBar = self.menuBar()
 
-        missionMenu = QMenu("&Mission", self)
-        loadMissionMenu = QAction("&Load...", self)
-        loadMissionMenu.triggered.connect(self._loadMissionAction)
-        missionMenu.addAction(loadMissionMenu)
-        menuBar.addMenu(missionMenu)
+        trialMenu = QMenu("&Trial", self)
+
+        # Load options
+        loadMenu = QMenu("&Load", self)
+        loadFromMetadataAction = QAction("&From Metadata...", self)
+        loadFromPackageAction = QAction("&From Package...", self)
+        loadFromMetadataAction.triggered.connect(self._loadTrialFromMetadataAction)
+        loadFromPackageAction.triggered.connect(self._loadTrialFromPackageAction)
+        loadMenu.addAction(loadFromMetadataAction)
+        loadMenu.addAction(loadFromPackageAction)
+        trialMenu.addMenu(loadMenu)
+        menuBar.addMenu(trialMenu)
+
+        # Dump option
+        self._dumpAction = QAction("&Dump...", self)
+        self._dumpAction.setEnabled(False)
+        self._dumpAction.triggered.connect(self._dumpTrialAction)
+        trialMenu.addAction(self._dumpAction)
 
     # Actions
     def _updateTimerAction(self, value):
@@ -151,15 +164,32 @@ class MainWindow(QMainWindow):
         if len(self._scores) > value:
             self._scoreLabel.setText(f"{self._trial.scores[value]}")
 
-    def _loadMissionAction(self, value):
+    def _loadTrialFromMetadataAction(self, value):
         filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]
-        with open(filepath, "r") as f:
+        if filepath != "":
+            with open(filepath, "r") as f:
+                self._trial = Trial(self._map)
+                self._trial.parse(f)
+            self._initializeTrial()
+
+    def _loadTrialFromPackageAction(self, value):
+        filepath = QFileDialog.getOpenFileName(self, "Select Package File", ".", "Package File (*.pkl)")[0]
+        if filepath != "":
             self._trial = Trial(self._map)
-            self._trial.parse(f)
+            self._trial.load(filepath)
+            self._initializeTrial()
+
+    def _dumpTrialAction(self, value):
+        filepath = QFileDialog.getSaveFileName(self, "Save Package File", ".", "Package File (*.pkl)")[0]
+        if filepath != "":
+            self._trial.save(filepath)
+
+    def _initializeTrial(self):
         self._timeSlider.setValue(0)
         self._timeSlider.setEnabled(True)
         self._fillHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
+        self._dumpAction.setEnabled(True)
 
     def _fillHeaderInfo(self):
         self._trialLabel.setText(self._trial.metadata["trial_number"])
