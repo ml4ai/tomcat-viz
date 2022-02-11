@@ -1,17 +1,17 @@
-import sys
-
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
-
 from imap.Gui.Utils import createLabel
 from imap.Common.Format import secondsToTime
 from imap.Gui.MapWidget import MapWidget
-
+from imap.Parser.Map import Map
 import json
 import os
 import numpy as np
+from pkg_resources import resource_stream
+import codecs
+
 
 
 class MainWindow(QMainWindow):
@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
         self._createMenu()
 
         self._scores = np.array([])
+        self._loadDefaultMap()
 
     def _createWidgets(self):
         self._trialLabel = createLabel("", self._regularLabelFont)
@@ -52,7 +53,12 @@ class MainWindow(QMainWindow):
         self._mapWidget = MapWidget(mapWidth, mapHeight)
 
         self._timerLabel = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
-        self._timerLabel.setEnabled(False)
+
+        self._timeSlider = QSlider(Qt.Horizontal)
+        self._timeSlider.setEnabled(False)
+        self._timeSlider.setRange(0, 899)
+        self._timeSlider.setSingleStep(1)
+        self._timeSlider.valueChanged.connect(self._updateTimerAction)
 
     def _configureLayout(self):
         sidePanelLayout = QHBoxLayout()
@@ -119,31 +125,18 @@ class MainWindow(QMainWindow):
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
-        sliderWidget = QSlider(Qt.Horizontal)
-        sliderWidget.setRange(0, 899)
-        sliderWidget.setSingleStep(1)
-        layout.addWidget(sliderWidget, 95)
+        layout.addWidget(self._timeSlider, 95)
         layout.addWidget(self._timerLabel, 5)
-
-        sliderWidget.valueChanged.connect(self._updateTimerAction)
-
         parentLayout.addLayout(layout, 5)
 
     def _createMenu(self):
         menuBar = self.menuBar()
 
-        mapMenu = QMenu("&Map", self)
-        loadMapMenu = QAction("&Load...", self)
-        loadMapMenu.triggered.connect(self._loadMapAction)
-        mapMenu.addAction(loadMapMenu)
-        menuBar.addMenu(mapMenu)
-
-        self._missionMenu = QMenu("&Mission", self)
-        self._missionMenu.setEnabled(False)
+        missionMenu = QMenu("&Mission", self)
         loadMissionMenu = QAction("&Load...", self)
         loadMissionMenu.triggered.connect(self._loadMissionAction)
-        self._missionMenu.addAction(loadMissionMenu)
-        menuBar.addMenu(self._missionMenu)
+        missionMenu.addAction(loadMissionMenu)
+        menuBar.addMenu(missionMenu)
 
     # Actions
     def _updateTimerAction(self, value):
@@ -152,13 +145,10 @@ class MainWindow(QMainWindow):
         if len(self._scores) > value:
             self._scoreLabel.setText(f"{self._scores[value]}")
 
-    def _loadMapAction(self, value):
-        directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
-        self._mapWidget.loadMap(directory)
-        self._missionMenu.setEnabled(True)
-
     def _loadMissionAction(self, value):
         directory = QFileDialog.getExistingDirectory(self, "Select Directory", ".", QFileDialog.ShowDirsOnly)
+        self._timeSlider.setValue(0)
+        self._timeSlider.setEnabled(True)
         self._scores = np.loadtxt(os.path.join(directory, "scores.txt"), dtype=np.int16)
         self._fillHeaderInfo(directory)
         self._mapWidget.loadMission(directory)
@@ -171,6 +161,14 @@ class MainWindow(QMainWindow):
         self._redPlayerLabel.setText(metadata["red_id"])
         self._greenPlayerLabel.setText(metadata["green_id"])
         self._bluePlayerLabel.setText(metadata["blue_id"])
+
+    def _loadDefaultMap(self):
+        objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.1_3D_sm_v1.0.json")
+        utf8_reader = codecs.getreader("utf-8")
+        jsonMap = json.load(utf8_reader(objects_resource))
+        mapObject = Map()
+        mapObject.parse(jsonMap)
+        self._mapWidget.loadMap(mapObject)
 
     def createWidget(self, color: str):
         widget = QWidget()

@@ -16,7 +16,7 @@ import codecs
 
 from imap.Gui.Utils import drawBlock, drawCircle, drawLine, drawWall
 from imap.Gui.CustomScene import CustomScene
-from imap.PreProcessing.MapParser import MapParser, Block
+from imap.Parser.Map import Map
 
 
 class MapWidget(QWidget):
@@ -32,7 +32,7 @@ class MapWidget(QWidget):
         self._scene = CustomScene(0, 0, width, height, Qt.white)
         self._view = QGraphicsView(self._scene, self)
 
-        self._mapMetadata = None
+        self._map = None
 
         self._missionMetadata = None
         self._playersPositions = None
@@ -43,12 +43,10 @@ class MapWidget(QWidget):
         self._playersPaths = []
         self._playersPathItems = []
 
-    def loadMap(self, mapDir: str):
-        with open(os.path.join(mapDir, "metadata.json"), "r") as f:
-            self._mapMetadata = json.load(f)
-
-        gridMap = np.loadtxt(os.path.join(mapDir, "grid_map.txt"), dtype=np.int16)
-        self._drawWallsAndDoors(gridMap)
+    def loadMap(self, mapObject: Map):
+        self._map = mapObject
+        self._scene.clear()
+        self._drawWallsAndDoors()
 
     def loadMission(self, missionDir: str):
         if os.path.exists(missionDir):
@@ -80,18 +78,18 @@ class MapWidget(QWidget):
                 self._drawPlayers(positions)
         self._lastDrawnTimeStep = timeStep
 
-    def _drawWallsAndDoors(self, gridMap: np.ndarray):
-        for i in range(gridMap.shape[0]):
-            for j in range(gridMap.shape[1]):
-                if gridMap[i][j] == MapParser.WALL:
+    def _drawWallsAndDoors(self):
+        for i in range(self._map.grid.shape[0]):
+            for j in range(self._map.grid.shape[1]):
+                if self._map.grid[i][j] == Map.WALL:
                     self._scene.drawWall(j, i, self._blockSize, self._blockSize)
-                elif gridMap[i][j] == MapParser.DOOR:
+                elif self._map.grid[i][j] == Map.DOOR:
                     self._scene.drawDoor(j, i, self._blockSize, self._blockSize)
                 else:
                     self._scene.drawEmptyBlock(j, i, self._blockSize, self._blockSize)
 
     def _drawInitialVictimsAndRubbles(self):
-        objects_resource = resource_stream("imap.resources.maps", self._missionMetadata["map_block_filename"])
+        objects_resource = resource_stream("imap.Resources.Maps", self._missionMetadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
         for i, row in enumerate(csv_reader):
@@ -140,7 +138,7 @@ class MapWidget(QWidget):
         self._playersPaths = [[redPath, greenPath, bluePath]]
 
     def _translatePosition(self, x: int, y: int) -> Tuple[int, int]:
-        return x - self._mapMetadata["min_x"], y - self._mapMetadata["min_y"]
+        return x - self._map.metadata["min_x"], y - self._map.metadata["min_y"]
 
     def _drawPlayers(self, positions: List[Tuple[float, float]]):
         self._currPlayersBlocks.append(
