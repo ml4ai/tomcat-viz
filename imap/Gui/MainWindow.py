@@ -163,7 +163,6 @@ class MainWindow(QMainWindow):
         self._mapWidget.updateFor(value)
         self._chatArea.updateFor(value)
         self._scoreLabel.setText(f"{self._trial.scores[value]}")
-        self._updateChatMessages()
 
     def _loadTrialFromMetadataAction(self, value):
         filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]

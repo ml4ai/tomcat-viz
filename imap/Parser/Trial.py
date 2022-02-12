@@ -9,6 +9,28 @@ from imap.Parser.Map import Map
 from imap.Parser.MarkerType import MarkerType
 
 
+class ChatMessage:
+    """
+    This class represents a chat message in the trial. It encapsulates information about the sender, the message and
+    the addressee. It is used so we can create a set of messages to get rid of duplicate ones.
+    """
+
+    def __init__(self, sender: str, addressee: str, color: str, text: str):
+        self.sender = sender
+        self.addressee = addressee
+        self.color = color
+        self.text = text
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                getattr(other, 'sender', None) == self.sender and
+                getattr(other, 'addressee', None) == self.addressee and
+                getattr(other, 'text', None) == self.text)
+
+    def __hash__(self):
+        return hash(f"{self.sender}#{self.addressee}#{self.text}")
+
+
 class Trial:
     NUM_ROLES = 3
     RED = 0
@@ -77,7 +99,7 @@ class Trial:
         currentScore = 0
         currentPlayersPositions = [np.zeros(2) for _ in range(Trial.NUM_ROLES)]
         currentPlacedMarkers = []
-        currentChatMessages = [[] for _ in range(Trial.NUM_ROLES)]
+        currentChatMessages = [set() for _ in range(Trial.NUM_ROLES)]
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -152,8 +174,8 @@ class Trial:
                     jsonText = json.loads(message["data"]["text"])
                     for playerId in message["data"]["addressees"]:
                         playerColor = playerIdToColor[playerId]
-                        currentChatMessages[playerColorToIdx[playerColor]].append(
-                            (sender, jsonText["text"], jsonText["color"]))
+                        chatMessage = ChatMessage(sender, playerId, jsonText["color"], jsonText["text"])
+                        currentChatMessages[playerColorToIdx[playerColor]].add(chatMessage)
 
                 elif Trial._isMessageOf(message, "observation", "State"):
                     missionTimer = message["data"]["mission_timer"]
@@ -165,8 +187,9 @@ class Trial:
                             self.placedMarkers.append(currentPlacedMarkers)
                             for playerIdx, positions in enumerate(self.playersPositions):
                                 positions[t] = currentPlayersPositions[playerIdx]
-                            for playerIdx, chatMessages in enumerate(self.chatMessages):
-                                chatMessages.append(currentChatMessages[playerIdx])
+                            for playerIdx, messages in enumerate(self.chatMessages):
+                                messages.append(currentChatMessages[playerIdx].copy())
+                                currentChatMessages[playerIdx].clear()
 
                         nextTimeStep = elapsedSeconds + 1
 
