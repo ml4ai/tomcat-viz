@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
 
 from imap.Gui.Utils import createLabel
+from imap.Gui.SpeechWidget import SpeechWidget
 from imap.Common.Format import secondsToTime
 from imap.Gui.MapWidget import MapWidget
 from imap.Parser.Map import Map
@@ -14,7 +15,6 @@ import os
 import numpy as np
 from pkg_resources import resource_stream
 import codecs
-
 
 
 class MainWindow(QMainWindow):
@@ -65,6 +65,8 @@ class MainWindow(QMainWindow):
         self._timeSlider.setSingleStep(1)
         self._timeSlider.valueChanged.connect(self._updateTimerAction)
 
+        self._chatArea = SpeechWidget()
+
     def _configureLayout(self):
         sidePanelLayout = QHBoxLayout()
 
@@ -81,11 +83,10 @@ class MainWindow(QMainWindow):
         self._createSliderPanel(leftPanelLayout)
 
         # Widgets on the right side of the window
-        speechAreaWidget = self.createWidget("magenta")
-        inferenceAreaWidget = self.createWidget("gray")
+        inferenceAreaWidget = self.createWidget("magenta")
 
-        rightPanelLayout.addWidget(speechAreaWidget)
-        rightPanelLayout.addWidget(inferenceAreaWidget)
+        rightPanelLayout.addWidget(self._chatArea, 50)
+        rightPanelLayout.addWidget(inferenceAreaWidget, 50)
 
         self._centralWidget.setLayout(sidePanelLayout)
 
@@ -160,8 +161,9 @@ class MainWindow(QMainWindow):
     def _updateTimerAction(self, value):
         self._timerLabel.setText(secondsToTime(value))
         self._mapWidget.updateFor(value)
-        if len(self._scores) > value:
-            self._scoreLabel.setText(f"{self._trial.scores[value]}")
+        self._chatArea.updateFor(value)
+        self._scoreLabel.setText(f"{self._trial.scores[value]}")
+        self._updateChatMessages()
 
     def _loadTrialFromMetadataAction(self, value):
         filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]
@@ -188,6 +190,7 @@ class MainWindow(QMainWindow):
         self._timeSlider.setEnabled(True)
         self._fillHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
+        self._chatArea.loadTrial(self._trial)
         self._dumpAction.setEnabled(True)
 
     def _fillHeaderInfo(self):

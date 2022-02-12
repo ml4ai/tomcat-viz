@@ -20,7 +20,8 @@ class Trial:
         "observations/state",
         "observations/events/scoreboard",
         "observations/events/player/role_selected",
-        "observations/events/player/marker_placed"
+        "observations/events/player/marker_placed",
+        "minecraft/chat"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -31,6 +32,7 @@ class Trial:
         self.scores = np.array([])
         self.playersPositions = []
         self.placedMarkers = []
+        self.chatMessages = []
 
     def save(self, filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -39,7 +41,8 @@ class Trial:
             "metadata": self.metadata,
             "scores": self.scores,
             "players_positions": self.playersPositions,
-            "placed_markers": self.placedMarkers
+            "placed_markers": self.placedMarkers,
+            "chat_messages": self.chatMessages
         }
 
         with open(filepath, "wb") as f:
@@ -53,6 +56,7 @@ class Trial:
         self.scores = trialPackage["scores"]
         self.playersPositions = trialPackage["players_positions"]
         self.placedMarkers = trialPackage["placed_markers"]
+        self.chatMessages = trialPackage["chat_messages"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -67,11 +71,13 @@ class Trial:
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Trial.NUM_ROLES)]
         self.placedMarkers = []
+        self.chatMessages = [[] for _ in range(Trial.NUM_ROLES)]
         playerColorToIdx = {"red": 0, "green": 1, "blue": 2}
 
         currentScore = 0
-        currentPlayersPositions = [np.zeros(2), np.zeros(2), np.zeros(2)]
+        currentPlayersPositions = [np.zeros(2) for _ in range(Trial.NUM_ROLES)]
         currentPlacedMarkers = []
+        currentChatMessages = [[] for _ in range(Trial.NUM_ROLES)]
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -141,6 +147,13 @@ class Trial:
                         currentPlacedMarkers.append((MarkerType.THREAT_ROOM, x, y))
                     elif "sos" in markerType:
                         currentPlacedMarkers.append((MarkerType.SOS, x, y))
+                elif Trial._isMessageOf(message, "chat", "Event:Chat"):
+                    sender = message["data"]["sender"]
+                    jsonText = json.loads(message["data"]["text"])
+                    for playerId in message["data"]["addressees"]:
+                        playerColor = playerIdToColor[playerId]
+                        currentChatMessages[playerColorToIdx[playerColor]].append(
+                            (sender, jsonText["text"], jsonText["color"]))
 
                 elif Trial._isMessageOf(message, "observation", "State"):
                     missionTimer = message["data"]["mission_timer"]
@@ -152,6 +165,8 @@ class Trial:
                             self.placedMarkers.append(currentPlacedMarkers)
                             for playerIdx, positions in enumerate(self.playersPositions):
                                 positions[t] = currentPlayersPositions[playerIdx]
+                            for playerIdx, chatMessages in enumerate(self.chatMessages):
+                                chatMessages.append(currentChatMessages[playerIdx])
 
                         nextTimeStep = elapsedSeconds + 1
 
@@ -193,7 +208,6 @@ class Trial:
     def _isMessageOf(message: json, type: str, subType: str):
         return message["header"]["message_type"].lower() == type.lower() and message["msg"][
             "sub_type"].lower() == subType.lower()
-
 
 # if __name__ == "__main__":
 #     parser = Trial(
