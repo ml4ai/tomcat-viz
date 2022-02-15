@@ -25,6 +25,7 @@ class CollapsiblePanel(QWidget):
         self.contentArea.setMaximumHeight(0)
         self.contentArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.contentArea.setFrameShape(QFrame.NoFrame)
+        self.contentArea.setLayout(QVBoxLayout())
 
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
@@ -56,14 +57,17 @@ class CollapsiblePanel(QWidget):
         )
         self.toggleAnimation.start()
 
-    def setContentLayout(self, layout):
-        lay = self.contentArea.layout()
-        del lay
-        self.contentArea.setLayout(layout)
+    def setCentralWidget(self, widget):
+        if self.contentArea.layout().count() > 0:
+            currentWidget: QWidget = self.contentArea.layout().takeAt(0)
+            currentWidget.deleteLater()
+        self.contentArea.layout().addWidget(widget)
         collapsed_height = (
                 self.sizeHint().height() - self.contentArea.maximumHeight()
         )
-        content_height = layout.sizeHint().height()
+
+        # Adding a bit of padding to avoid overlapping
+        content_height = widget.sizeHint().height() + 20
         for i in range(self.toggleAnimation.animationCount()):
             animation = self.toggleAnimation.animationAt(i)
             animation.setDuration(500)
@@ -77,43 +81,3 @@ class CollapsiblePanel(QWidget):
         content_animation.setStartValue(0)
         content_animation.setEndValue(content_height)
 
-
-if __name__ == "__main__":
-    import sys
-    import random
-    import PyQt5.QtWidgets as QtWidgets
-    import PyQt5.QtGui as QtGui
-    from imap.Gui.TimeSeriesPlotWidget import TimeSeriesPlotWidget
-    from imap.Parser.Estimates import TimeSeries
-
-    app = QtWidgets.QApplication(sys.argv)
-
-    w = QtWidgets.QMainWindow()
-    w.setCentralWidget(QtWidgets.QWidget())
-    dock = QtWidgets.QDockWidget("Collapsible Demo")
-    w.addDockWidget(Qt.LeftDockWidgetArea, dock)
-    scroll = QtWidgets.QScrollArea()
-    dock.setWidget(scroll)
-    content = QtWidgets.QWidget()
-    scroll.setWidget(content)
-    scroll.setWidgetResizable(True)
-    vlay = QtWidgets.QVBoxLayout(content)
-    for i in range(10):
-        box = CollapsiblePanel("Collapsible Box Header-{}".format(i))
-        vlay.addWidget(box)
-        lay = QtWidgets.QVBoxLayout()
-        for j in range(8):
-            # label = QtWidgets.QLabel("{}".format(j))
-            # label.setMinimumHeight(50)
-            label = TimeSeriesPlotWidget(TimeSeries("Test", [[0.1, 0.2, 0.3]]))
-            color = QtGui.QColor(*[random.randint(0, 255) for _ in range(3)])
-            label.setStyleSheet(
-                "background-color: {}; color : white;".format(color.name())
-            )
-            label.setAlignment(Qt.AlignCenter)
-            lay.addWidget(label)
-        box.setContentLayout(lay)
-    vlay.addStretch()
-    w.resize(640, 480)
-    w.show()
-    sys.exit(app.exec_())

@@ -1,6 +1,6 @@
 from typing import Dict, List
 from pyqtgraph import PlotWidget, mkPen
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import QSizePolicy
 
 from imap.Common.Format import secondsToTime
@@ -54,3 +54,9 @@ class TimeSeriesPlotWidget(PlotWidget):
 
                 plot.setData(x, y)
                 self._baselineDataItem.setData(x, [0.5] * len(x))
+
+    def minimumSizeHint(self) -> QSize:
+        return QSize(super().minimumSizeHint().width(), 150)
+
+    def sizeHint(self) -> QSize:
+        return QSize(super().sizeHint().width(), 150)
