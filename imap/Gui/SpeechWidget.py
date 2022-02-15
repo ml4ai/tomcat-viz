@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QTextEdit
 
 from imap.Common.Format import secondsToTime
 from imap.Parser.Trial import Trial, ChatMessage
+from imap.Common.Constants import Constants
 
 
 class SpeechWidget(QTextEdit):
@@ -22,11 +23,11 @@ class SpeechWidget(QTextEdit):
         if timeStep > self._lastDrawnTimeStep:
             for t in range(self._lastDrawnTimeStep + 1, timeStep + 1):
                 chatMessages = []
-                for chatMessage in self._trial.chatMessages[Trial.RED][t]:
+                for chatMessage in self._trial.chatMessages[Constants.Player.RED.value][t]:
                     chatMessages.append((chatMessage, secondsToTime(t), "red"))
-                for chatMessage in self._trial.chatMessages[Trial.GREEN][t]:
+                for chatMessage in self._trial.chatMessages[Constants.Player.GREEN.value][t]:
                     chatMessages.append((chatMessage, secondsToTime(t), "green"))
-                for chatMessage in self._trial.chatMessages[Trial.BLUE][t]:
+                for chatMessage in self._trial.chatMessages[Constants.Player.BLUE.value][t]:
                     chatMessages.append((chatMessage, secondsToTime(t), "blue"))
                 self._htmlTableLines.extend(self._chatMessagesToHTMLTableLines(chatMessages))
                 self._numTableLinesPerTime.append(len(chatMessages))

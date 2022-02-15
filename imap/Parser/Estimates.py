@@ -39,7 +39,7 @@ class Estimates:
                     # be used as the title of the plot.
                     variableName = " ".join(terms[:-1])
                     series = TimeSeries(variableName, values)
-                    self.playerSeries[Constants.COLOR_MAP[color]].append(series)
+                    self.playerSeries[Constants.PLAYER_COLOR_MAP[color].value].append(series)
                 else:
                     variableName = " ".join(terms)
                     series = TimeSeries(variableName, values)

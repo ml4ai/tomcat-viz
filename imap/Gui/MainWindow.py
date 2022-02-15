@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea
+from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
@@ -7,6 +7,7 @@ from imap.Gui.Utils import createLabel
 from imap.Gui.SpeechWidget import SpeechWidget
 from imap.Gui.EstimatesWidget import EstimatesWidget
 from imap.Common.Format import secondsToTime
+from imap.Common.Constants import Constants
 from imap.Gui.MapWidget import MapWidget
 from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial
@@ -19,7 +20,6 @@ import codecs
 
 
 class MainWindow(QMainWindow):
-
     LEFT_PANEL_PROP = 80
     MAP_HEIGHT_PROP = 80
 
@@ -44,22 +44,35 @@ class MainWindow(QMainWindow):
         self._trial = None
 
     def _createWidgets(self):
+        # Trial Info
         self._trialLabel = createLabel("", self._regularLabelFont)
         self._teamLabel = createLabel("", self._regularLabelFont)
 
+        # Game Info
         self._scoreLabel = createLabel("0", self._regularLabelFont)
         self._perturbationCheckbox = QCheckBox()
         self._perturbationCheckbox.setEnabled(False)
+
+        # Player Info
         self._redPlayerLabel = createLabel("", self._boldLabelFont, "red", Qt.AlignCenter)
         self._greenPlayerLabel = createLabel("", self._boldLabelFont, "green", Qt.AlignCenter)
         self._bluePlayerLabel = createLabel("", self._boldLabelFont, "blue", Qt.AlignCenter)
 
+        self._redPlayerEquippedItemIcon = self.createWidget("red")
+        self._greenPlayerEquippedItemIcon = self.createWidget("green")
+        self._bluePlayerEquippedItemIcon = self.createWidget("blue")
+
+        self._redPlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
+        self._greenPlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
+        self._bluePlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
+
+        # Map
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
         mapHeight = int(self.height() * MainWindow.MAP_HEIGHT_PROP / 100)
         self._mapWidget = MapWidget(mapWidth, mapHeight)
 
+        # Timer
         self._timerLabel = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
-
         self._timeSlider = QSlider(Qt.Horizontal)
         self._timeSlider.setEnabled(False)
         self._timeSlider.setRange(0, 899)
@@ -80,7 +93,7 @@ class MainWindow(QMainWindow):
 
         # Widgets on the left side of the window
         self._createTrialInfoPanel(leftPanelLayout)
-        self._createScorePanel(leftPanelLayout)
+        self._createGameInfoPanel(leftPanelLayout)
         self._createMapPanel(leftPanelLayout)
         self._createSliderPanel(leftPanelLayout)
 
@@ -101,7 +114,7 @@ class MainWindow(QMainWindow):
         layout.addRow(createLabel("Team:", self._boldLabelFont), self._teamLabel)
         parentLayout.addLayout(layout, 5)
 
-    def _createScorePanel(self, parentLayout: QLayout):
+    def _createGameInfoPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
         centerInfoLayout = QVBoxLayout()
 
@@ -117,17 +130,57 @@ class MainWindow(QMainWindow):
         centerInfoLayout.addLayout(upper_info)
 
         # Player IDs
-        bottom_info = QHBoxLayout()
-        bottom_info.addWidget(self._redPlayerLabel)
-        bottom_info.addWidget(self._greenPlayerLabel)
-        bottom_info.addWidget(self._bluePlayerLabel)
-        centerInfoLayout.addLayout(bottom_info)
+        self._createPlayerInfoPanel(centerInfoLayout)
 
         layout.addWidget(QWidget(), 30)
         layout.addLayout(centerInfoLayout, 40)
         layout.addWidget(QWidget(), 30)
 
         parentLayout.addLayout(layout, 5)
+
+    def _createPlayerInfoPanel(self, parentLayout: QLayout):
+        players_info_layout = QHBoxLayout()
+
+        red_info_layout = QVBoxLayout()
+        red_info_layout.addWidget(self._redPlayerLabel)
+        red_info_bottom_layout = QHBoxLayout()
+        red_info_bottom_layout.addWidget(self._redPlayerEquippedItemIcon)
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        red_info_bottom_layout.addWidget(separator)
+        red_info_bottom_layout.addWidget(self._redPlayerActionLabel)
+        red_info_bottom_layout.addStretch()
+        red_info_layout.addLayout(red_info_bottom_layout)
+        players_info_layout.addLayout(red_info_layout)
+
+        green_info_layout = QVBoxLayout()
+        green_info_layout.addWidget(self._greenPlayerLabel)
+        green_info_bottom_layout = QHBoxLayout()
+        green_info_bottom_layout.addWidget(self._greenPlayerEquippedItemIcon)
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        green_info_bottom_layout.addWidget(separator)
+        green_info_bottom_layout.addWidget(self._greenPlayerActionLabel)
+        green_info_bottom_layout.addStretch()
+        green_info_layout.addLayout(green_info_bottom_layout)
+        players_info_layout.addLayout(green_info_layout)
+
+        blue_info_layout = QVBoxLayout()
+        blue_info_layout.addWidget(self._bluePlayerLabel)
+        blue_info_bottom_layout = QHBoxLayout()
+        blue_info_bottom_layout.addWidget(self._bluePlayerEquippedItemIcon)
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        blue_info_bottom_layout.addWidget(separator)
+        blue_info_bottom_layout.addWidget(self._bluePlayerActionLabel)
+        blue_info_bottom_layout.addStretch()
+        blue_info_layout.addLayout(blue_info_bottom_layout)
+        players_info_layout.addLayout(blue_info_layout)
+
+        parentLayout.addLayout(players_info_layout)
 
     def _createMapPanel(self, parentLayout: QLayout):
         parentLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
@@ -175,8 +228,7 @@ class MainWindow(QMainWindow):
 
     # Actions
     def _updateTimerAction(self, value):
-        self._timerLabel.setText(secondsToTime(value))
-        self._scoreLabel.setText(f"{self._trial.scores[value]}")
+        self._updateHeaderInfo(value)
 
         # Update custom widgets
         self._mapWidget.updateFor(value)
@@ -206,12 +258,12 @@ class MainWindow(QMainWindow):
     def _initializeTrial(self):
         self._timeSlider.setValue(0)
         self._timeSlider.setEnabled(True)
-        self._fillHeaderInfo()
+        self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
         self._chatWidget.loadTrial(self._trial)
         self._dumpAction.setEnabled(True)
 
-    def _fillHeaderInfo(self):
+    def _initializeHeaderInfo(self):
         self._trialLabel.setText(self._trial.metadata["trial_number"])
         self._teamLabel.setText(self._trial.metadata["team_number"])
         self._redPlayerLabel.setText(self._trial.metadata["red_id"])
@@ -231,10 +283,26 @@ class MainWindow(QMainWindow):
         if filepath != "":
             self._estimatesWidget.loadEstimates(Estimates(filepath))
 
+    def _updateHeaderInfo(self, timeStep: int):
+        self._timerLabel.setText(secondsToTime(timeStep))
+        self._scoreLabel.setText(f"{self._trial.scores[timeStep]}")
+        self._updateActions(timeStep)
 
-    # def createWidget(self, color: str):
-    #     widget = QWidget()
-    #     widget.setStyleSheet(f"background-color:{color};")
-    #     widget.show()
-    #
-    #     return widget
+    def _updateActions(self, timeStep: int):
+        labels = [self._redPlayerActionLabel, self._greenPlayerActionLabel, self._bluePlayerActionLabel]
+        for i, label in enumerate(labels):
+            action = self._trial.playersActions[i][timeStep]
+            if action == Constants.Action.NONE.value:
+                label.setText("")
+            elif action == Constants.Action.HEALING_VICTIM.value:
+                label.setText("Healing victim...")
+            elif action == Constants.Action.CARRYING_VICTIM.value:
+                label.setText("Carrying victim...")
+            elif action == Constants.Action.DESTROYING_RUBBLE.value:
+                label.setText("Destroying rubble...")
+
+    def createWidget(self, color: str):
+        widget = QWidget()
+        widget.setStyleSheet(f"background-color:{color};")
+        widget.setFixedSize(20, 20)
+        return widget

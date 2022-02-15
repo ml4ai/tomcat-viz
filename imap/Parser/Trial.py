@@ -1,4 +1,4 @@
-from typing import Any, List, TextIO
+from typing import Any, List, Set, TextIO
 import os
 import json
 from dateutil.parser import parse
@@ -7,6 +7,7 @@ import pickle
 
 from imap.Parser.Map import Map
 from imap.Parser.MarkerType import MarkerType
+from imap.Common.Constants import Constants
 
 
 class ChatMessage:
@@ -32,10 +33,6 @@ class ChatMessage:
 
 
 class Trial:
-    NUM_ROLES = 3
-    RED = 0
-    GREEN = 1
-    BLUE = 2
     USED_TOPICS = [
         "trial",
         "observations/events/mission",
@@ -43,7 +40,11 @@ class Trial:
         "observations/events/scoreboard",
         "observations/events/player/role_selected",
         "observations/events/player/marker_placed",
-        "minecraft/chat"
+        "minecraft/chat",
+        "observations/events/player/triage",
+        "observations/events/player/victim_picked_up",
+        "observations/events/player/victim_placed",
+        "observations/events/player/tool_used"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -52,9 +53,14 @@ class Trial:
 
         self.metadata = {}
         self.scores = np.array([])
-        self.playersPositions = []
+
         self.placedMarkers = []
+
+        # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
+        # of these, there might be multiple values (e.g. chat messages)
+        self.playersPositions = []
         self.chatMessages = []
+        self.playersActions = []
 
     def save(self, filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -64,7 +70,8 @@ class Trial:
             "scores": self.scores,
             "players_positions": self.playersPositions,
             "placed_markers": self.placedMarkers,
-            "chat_messages": self.chatMessages
+            "chat_messages": self.chatMessages,
+            "players_actions": self.playersActions,
         }
 
         with open(filepath, "wb") as f:
@@ -79,6 +86,7 @@ class Trial:
         self.playersPositions = trialPackage["players_positions"]
         self.placedMarkers = trialPackage["placed_markers"]
         self.chatMessages = trialPackage["chat_messages"]
+        self.playersActions = trialPackage["players_actions"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -90,16 +98,19 @@ class Trial:
         missionStarted = False
         playerIdToColor = {}
         self.metadata = {}
+
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
-        self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Trial.NUM_ROLES)]
         self.placedMarkers = []
-        self.chatMessages = [[] for _ in range(Trial.NUM_ROLES)]
-        playerColorToIdx = {"red": 0, "green": 1, "blue": 2}
+
+        self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
+        self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
+        self.playersActions = [np.ones(self._timeSteps, dtype=np.int16) for _ in range(Constants.NUM_ROLES)]
 
         currentScore = 0
-        currentPlayersPositions = [np.zeros(2) for _ in range(Trial.NUM_ROLES)]
+        currentPlayersPositions = [np.zeros(2) for _ in range(Constants.NUM_ROLES)]
         currentPlacedMarkers = []
-        currentChatMessages = [set() for _ in range(Trial.NUM_ROLES)]
+        currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
+        currentPlayersActions = [Constants.Action.NONE.value for _ in range(Constants.NUM_ROLES)]
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -143,8 +154,7 @@ class Trial:
                 playerColor = playerIdToColor[playerId]
                 x = message["data"]["x"]
                 y = message["data"]["z"]
-                currentPlayersPositions[playerColorToIdx[playerColor]][0] = x
-                currentPlayersPositions[playerColorToIdx[playerColor]][1] = y
+                currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value] = np.array([x, y])
 
             if missionStarted:
                 if Trial._isMessageOf(message, "observation", "Event:Scoreboard"):
@@ -175,7 +185,35 @@ class Trial:
                     for playerId in message["data"]["addressees"]:
                         playerColor = playerIdToColor[playerId]
                         chatMessage = ChatMessage(sender, playerId, jsonText["color"], jsonText["text"])
-                        currentChatMessages[playerColorToIdx[playerColor]].add(chatMessage)
+                        currentChatMessages[Constants.PLAYER_COLOR_MAP[playerColor].value].add(chatMessage)
+                elif Trial._isMessageOf(message, "event", "Event:VictimPickedUp"):
+                    playerId = message["data"]["participant_id"]
+                    playerColor = playerIdToColor[playerId]
+                    currentPlayersActions[
+                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM.value
+                elif Trial._isMessageOf(message, "event", "Event:VictimPlaced"):
+                    playerId = message["data"]["participant_id"]
+                    playerColor = playerIdToColor[playerId]
+                    currentPlayersActions[
+                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+                elif Trial._isMessageOf(message, "event", "Event:Triage"):
+                    playerId = message["data"]["participant_id"]
+                    playerColor = playerIdToColor[playerId]
+
+                    if message["data"]["triage_state"].lower() == "in_progress":
+                        currentPlayersActions[
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.HEALING_VICTIM.value
+                    else:
+                        currentPlayersActions[
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+                elif Trial._isMessageOf(message, "event", "Event:ToolUsed"):
+                    tool = message["data"]["tool_type"].lower()
+                    target_block = message["data"]["target_block_type"].lower()
+                    if tool == "hammer" and target_block == "minecraft:gravel":
+                        playerId = message["data"]["participant_id"]
+                        playerColor = playerIdToColor[playerId]
+                        currentPlayersActions[
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE.value
 
                 elif Trial._isMessageOf(message, "observation", "State"):
                     missionTimer = message["data"]["mission_timer"]
@@ -190,6 +228,9 @@ class Trial:
                             for playerIdx, messages in enumerate(self.chatMessages):
                                 messages.append(currentChatMessages[playerIdx].copy())
                                 currentChatMessages[playerIdx].clear()
+                            for playerIdx, actions in enumerate(self.playersActions):
+                                actions[t] = currentPlayersActions[playerIdx]
+                                currentPlayersActions[playerIdx] = Constants.Action.NONE.value
 
                         nextTimeStep = elapsedSeconds + 1
 
