@@ -12,6 +12,7 @@ from imap.Gui.MapWidget import MapWidget
 from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial
 from imap.Parser.Estimates import Estimates
+from imap.Gui.PlayerPanelWidget import PlayerPanelWidget
 
 import json
 import numpy as np
@@ -54,17 +55,9 @@ class MainWindow(QMainWindow):
         self._perturbationCheckbox.setEnabled(False)
 
         # Player Info
-        self._redPlayerLabel = createLabel("", self._boldLabelFont, "red", Qt.AlignCenter)
-        self._greenPlayerLabel = createLabel("", self._boldLabelFont, "green", Qt.AlignCenter)
-        self._bluePlayerLabel = createLabel("", self._boldLabelFont, "blue", Qt.AlignCenter)
-
-        self._redPlayerEquippedItemIcon = self.createWidget("red")
-        self._greenPlayerEquippedItemIcon = self.createWidget("green")
-        self._bluePlayerEquippedItemIcon = self.createWidget("blue")
-
-        self._redPlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
-        self._greenPlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
-        self._bluePlayerActionLabel = createLabel("", self._regularLabelFont, "gray", Qt.AlignLeft)
+        self._redPanel = PlayerPanelWidget("red")
+        self._greenPanel = PlayerPanelWidget("green")
+        self._bluePanel = PlayerPanelWidget("blue")
 
         # Map
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
@@ -130,57 +123,18 @@ class MainWindow(QMainWindow):
         centerInfoLayout.addLayout(upper_info)
 
         # Player IDs
-        self._createPlayerInfoPanel(centerInfoLayout)
+        # self._createPlayerInfoPanel(centerInfoLayout)
+        bottom_info_layout = QHBoxLayout()
+        bottom_info_layout.addWidget(self._redPanel)
+        bottom_info_layout.addWidget(self._greenPanel)
+        bottom_info_layout.addWidget(self._bluePanel)
+        centerInfoLayout.addLayout(bottom_info_layout)
 
-        layout.addWidget(QWidget(), 30)
-        layout.addLayout(centerInfoLayout, 40)
-        layout.addWidget(QWidget(), 30)
+        layout.addWidget(QWidget(), 20)
+        layout.addLayout(centerInfoLayout, 60)
+        layout.addWidget(QWidget(), 20)
 
         parentLayout.addLayout(layout, 5)
-
-    def _createPlayerInfoPanel(self, parentLayout: QLayout):
-        players_info_layout = QHBoxLayout()
-
-        red_info_layout = QVBoxLayout()
-        red_info_layout.addWidget(self._redPlayerLabel)
-        red_info_bottom_layout = QHBoxLayout()
-        red_info_bottom_layout.addWidget(self._redPlayerEquippedItemIcon)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        red_info_bottom_layout.addWidget(separator)
-        red_info_bottom_layout.addWidget(self._redPlayerActionLabel)
-        red_info_bottom_layout.addStretch()
-        red_info_layout.addLayout(red_info_bottom_layout)
-        players_info_layout.addLayout(red_info_layout)
-
-        green_info_layout = QVBoxLayout()
-        green_info_layout.addWidget(self._greenPlayerLabel)
-        green_info_bottom_layout = QHBoxLayout()
-        green_info_bottom_layout.addWidget(self._greenPlayerEquippedItemIcon)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        green_info_bottom_layout.addWidget(separator)
-        green_info_bottom_layout.addWidget(self._greenPlayerActionLabel)
-        green_info_bottom_layout.addStretch()
-        green_info_layout.addLayout(green_info_bottom_layout)
-        players_info_layout.addLayout(green_info_layout)
-
-        blue_info_layout = QVBoxLayout()
-        blue_info_layout.addWidget(self._bluePlayerLabel)
-        blue_info_bottom_layout = QHBoxLayout()
-        blue_info_bottom_layout.addWidget(self._bluePlayerEquippedItemIcon)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        blue_info_bottom_layout.addWidget(separator)
-        blue_info_bottom_layout.addWidget(self._bluePlayerActionLabel)
-        blue_info_bottom_layout.addStretch()
-        blue_info_layout.addLayout(blue_info_bottom_layout)
-        players_info_layout.addLayout(blue_info_layout)
-
-        parentLayout.addLayout(players_info_layout)
 
     def _createMapPanel(self, parentLayout: QLayout):
         parentLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
@@ -266,9 +220,9 @@ class MainWindow(QMainWindow):
     def _initializeHeaderInfo(self):
         self._trialLabel.setText(self._trial.metadata["trial_number"])
         self._teamLabel.setText(self._trial.metadata["team_number"])
-        self._redPlayerLabel.setText(self._trial.metadata["red_id"])
-        self._greenPlayerLabel.setText(self._trial.metadata["green_id"])
-        self._bluePlayerLabel.setText(self._trial.metadata["blue_id"])
+        self._redPanel.setName(self._trial.metadata["red_id"])
+        self._greenPanel.setName(self._trial.metadata["green_id"])
+        self._bluePanel.setName(self._trial.metadata["blue_id"])
 
     def _loadDefaultMap(self):
         objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.1_3D_sm_v1.0.json")
@@ -289,17 +243,10 @@ class MainWindow(QMainWindow):
         self._updateActions(timeStep)
 
     def _updateActions(self, timeStep: int):
-        labels = [self._redPlayerActionLabel, self._greenPlayerActionLabel, self._bluePlayerActionLabel]
-        for i, label in enumerate(labels):
+        panels = [self._redPanel, self._greenPanel, self._bluePanel]
+        for i, panel in enumerate(panels):
             action = self._trial.playersActions[i][timeStep]
-            if action == Constants.Action.NONE.value:
-                label.setText("")
-            elif action == Constants.Action.HEALING_VICTIM.value:
-                label.setText("Healing victim...")
-            elif action == Constants.Action.CARRYING_VICTIM.value:
-                label.setText("Carrying victim...")
-            elif action == Constants.Action.DESTROYING_RUBBLE.value:
-                label.setText("Destroying rubble...")
+            panel.setAction(action)
 
     def createWidget(self, color: str):
         widget = QWidget()
