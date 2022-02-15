@@ -64,6 +64,13 @@ class CustomScene(QGraphicsScene):
 
         return self._drawStampedBlock(label, x, y, scale, blockSize, Qt.black, Qt.black, Qt.white)
 
+    def addItem(self, item: QGraphicsItem) -> None:
+        if isinstance(item, StampedRectItem):
+            super().addItem(item.rectItem)
+            super().addItem(item.textItem)
+        else:
+            super().addItem(item)
+
     def removeItem(self, item: QGraphicsItem) -> None:
         if isinstance(item, StampedRectItem):
             super().removeItem(item.rectItem)

@@ -8,11 +8,21 @@ from pkg_resources import resource_stream
 import codecs
 
 from PyQt5.QtWidgets import QWidget
-from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen
+from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen, QGraphicsItem
 
 from imap.Gui.CustomScene import CustomScene
 from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial
+
+
+class SceneObjectAction:
+    """
+    As we adding and removing objects from the scene, we store the collection so we can reverse the process
+    """
+
+    def __init__(self, item: QGraphicsItem, added: bool):
+        self.item = item
+        self.added = added
 
 
 class MapWidget(QWidget):
@@ -32,12 +42,24 @@ class MapWidget(QWidget):
         self._trial = None
 
         self._lastDrawnTimeStep = -1
+        self._maxDrawnTimeStep = -1
+
+        # List of scene objects and actions (addition or removal) over time
+        # Every time step will store a collection of scene object actions.
+        self._sceneObjectActions: List[List[SceneObjectAction]] = [[]]
 
         # Stores objects draw per time step
         self._currPlayersBlocks = []
         self._playersPaths = []
         self._playersPathItems = []
         self._markerItems = []
+
+        # Items added and removed to/from the scene per time step. It will cache the objects so we don't need to
+        # recreate then if we go forth, back and forth
+        self._addedPlayerItems = [[]]
+        self._removedPlayerItems = [[]]
+        self._addedBlockItems = [[]]
+        self._removedBlockItems = [[]]
 
     def loadMap(self, mapObject: Map):
         self._map = mapObject
@@ -46,26 +68,26 @@ class MapWidget(QWidget):
 
     def loadTrial(self, trial: Trial):
         self._trial = trial
+        self._sceneObjectActions.append([])
         self._drawInitialVictimsAndRubbles()
         self._placePlayersInTheMap()
         self._lastDrawnTimeStep = 0
+        self._maxDrawnTimeStep = 0
 
     def updateFor(self, timeStep: int):
         if timeStep > self._lastDrawnTimeStep:
             for t in range(self._lastDrawnTimeStep + 1, timeStep + 1):
-                self._erasePlayersBlocks()
-                positions = self._getPlayersPositionsAt(t)
-                self._drawTrajectories(positions)
-                self._drawPlayers(positions)
-                self._drawMarkers(timeStep)
+                self._drawTrajectoriesAt(t, True)
+                self._drawPlayersAt(t, True)
+                self._drawBlocks(t, True)
         else:
             for t in range(self._lastDrawnTimeStep - 1, timeStep - 1, -1):
-                self._erasePlayersBlocks()
-                self._popTrajectories()
-                positions = self._getPlayersPositionsAt(timeStep)
-                self._drawPlayers(positions)
-                self._popMarkers()
+                self._drawTrajectoriesAt(t, False)
+                self._drawPlayersAt(t, False)
+                self._drawBlocks(t, False)
+
         self._lastDrawnTimeStep = timeStep
+        self._maxDrawnTimeStep = max(self._maxDrawnTimeStep, timeStep)
 
     def _drawWallsAndDoors(self):
         for i in range(self._map.grid.shape[0]):
@@ -81,6 +103,8 @@ class MapWidget(QWidget):
         objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
+        self._addedBlockItems.append([])
+        self._removedBlockItems.append([])
         for i, row in enumerate(csv_reader):
             if i == 0:
                 # Skip header
@@ -88,24 +112,73 @@ class MapWidget(QWidget):
 
             coordinates = row[0].split()
             x, y = self._translatePosition(int(coordinates[0]), int(coordinates[2]))
+            item = None
             if row[1] == "block_signal_victim":
-                self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
             elif row[1] == "gravel":
-                self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_victim_1":
-                self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_victim_1b":
-                self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_victim_proximity":
-                self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_rubble_collapse":
-                self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
+                item = self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
+
+            if item is not None:
+                self._addedBlockItems[0].append(item)
 
     def _placePlayersInTheMap(self):
-        positions = self._getPlayersPositionsAt(0)
-        self._drawPlayers(positions)
+        self._drawPlayersAt(0, True)
+        self._initializeTrajectories()
 
+    def _drawPlayersAt(self, timeStep: int, forward: bool):
+        if forward:
+            if timeStep > self._maxDrawnTimeStep:
+                if len(self._addedPlayerItems) == timeStep:
+                    self._addedPlayerItems.append([])
+                    self._removedPlayerItems.append([])
+
+                # Remove player items from previous time step
+                if timeStep >= 1:
+                    for item in self._addedPlayerItems[timeStep - 1]:
+                        self._removedPlayerItems[timeStep].append(item)
+                        self._scene.removeItem(item)
+
+                # Create new items for the current time step
+                # The creation of items already insert them into the canvas
+                items = self._createPlayerItemsAt(timeStep)
+                for item in items:
+                    self._addedPlayerItems[timeStep].append(item)
+            else:
+                # Items were previously created. Just add and remove them accordingly
+                for item in self._addedPlayerItems[timeStep]:
+                    self._scene.addItem(item)
+
+                for item in self._removedPlayerItems[timeStep]:
+                    self._scene.removeItem(item)
+        else:
+            # Reverse the actions of the subsequente time step
+            for item in self._addedPlayerItems[timeStep + 1]:
+                self._scene.removeItem(item)
+
+            for item in self._removedPlayerItems[timeStep + 1]:
+                self._scene.addItem(item)
+
+    def _createPlayerItemsAt(self, timeStep: int) -> List[QGraphicsItem]:
+        positions = self._getPlayersPositionsAt(timeStep)
+        items = [
+            self._scene.drawRed(*positions[0], self._blockSize, self._playerSize),
+            self._scene.drawGreen(*positions[1], self._blockSize, self._playerSize),
+            self._scene.drawBlue(*positions[2], self._blockSize, self._playerSize)
+        ]
+
+        return items
+
+    def _initializeTrajectories(self):
         # Initialize trajectories
+        positions = self._getPlayersPositionsAt(0)
         redPen = QPen(Qt.red, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         redPath = QPainterPath()
         redPath.moveTo(self._blockSize * (positions[0][0] + 0.5), self._blockSize * (positions[0][1] + 0.5))
@@ -129,14 +202,6 @@ class MapWidget(QWidget):
     def _translatePosition(self, x: int, y: int) -> Tuple[int, int]:
         return x - self._map.metadata["min_x"], y - self._map.metadata["min_y"]
 
-    def _drawPlayers(self, positions: List[Tuple[float, float]]):
-        self._currPlayersBlocks.append(
-            self._scene.drawRed(*positions[0], self._blockSize, self._playerSize))
-        self._currPlayersBlocks.append(
-            self._scene.drawGreen(*positions[1], self._blockSize, self._playerSize))
-        self._currPlayersBlocks.append(
-            self._scene.drawBlue(*positions[2], self._blockSize, self._playerSize))
-
     def _getPlayersPositionsAt(self, time_step: int) -> List[Tuple[float, float]]:
         positions = []
         for positionPerPlayer in self._trial.playersPositions:
@@ -145,33 +210,59 @@ class MapWidget(QWidget):
 
         return positions
 
-    def _erasePlayersBlocks(self):
-        for item in self._currPlayersBlocks:
-            self._scene.removeItem(item)
-        self._currPlayersBlocks = []
+    def _drawTrajectoriesAt(self, timeStep: int, forward: bool):
+        if forward:
+            if timeStep > self._maxDrawnTimeStep:
+                # Create a new path extending from the previous one
+                paths = self._createPathTo(timeStep)
+                self._playersPaths.append(paths)
+            else:
+                # Reuse previously created path
+                paths = self._playersPaths[timeStep]
+        else:
+            # Reuse previously created path
+            paths = self._playersPaths[timeStep]
 
-    def _drawTrajectories(self, positions: List[Tuple[float, float]]):
-        newPaths = []
-        for i in range(len(self._playersPathItems)):
-            path = QPainterPath(self._playersPaths[-1][i])
-            path.lineTo(self._blockSize * (positions[i][0] + 0.5), self._blockSize * (positions[i][1] + 0.5))
-            newPaths.append(path)
-            self._playersPathItems[i].setPath(path)
-        self._playersPaths.append(newPaths)
-
-    def _popTrajectories(self):
-        self._playersPaths.pop()
-        for i in range(len(self._playersPathItems)):
-            path = self._playersPaths[-1][i]
+        # Update scene to use the current path
+        for i, path in enumerate(paths):
             self._playersPathItems[i].setPath(path)
 
-    def _drawMarkers(self, timeStep: int):
-        items = []
-        for marker in self._trial.placedMarkers[timeStep]:
-            items.append(self._scene.drawMarker(marker[0], marker[1], marker[2], self._blockSize, self._blockSize))
-        self._markerItems.append(items)
+    def _createPathTo(self, timeStep: int):
+        paths = []
+        positions = self._getPlayersPositionsAt(timeStep)
+        for i, position in enumerate(positions):
+            # Extend previous path
+            path = QPainterPath(self._playersPaths[timeStep - 1][i])
+            path.lineTo(self._blockSize * (position[0] + 0.5), self._blockSize * (position[1] + 0.5))
+            paths.append(path)
 
-    def _popMarkers(self):
-        for marker in self._markerItems[-1]:
-            self._scene.removeItem(marker)
-        self._markerItems.pop()
+        return paths
+
+    def _drawBlocks(self, timeStep: int, forward: bool):
+        if forward:
+            if timeStep > self._maxDrawnTimeStep:
+                if len(self._addedBlockItems) == timeStep:
+                    self._addedBlockItems.append([])
+                    self._removedBlockItems.append([])
+
+                blocks = []
+                for marker in self._trial.placedMarkers[timeStep]:
+                    blocks.append(
+                        self._scene.drawMarker(marker[0], marker[1], marker[2], self._blockSize, self._blockSize))
+
+                # Other blocks
+
+                self._addedBlockItems[timeStep] = blocks
+            else:
+                for item in self._addedBlockItems[timeStep]:
+                    self._scene.addItem(item)
+
+                for item in self._removedBlockItems[timeStep]:
+                    self._scene.removeItem(item)
+        else:
+            # Reverse the action of the next time step
+            for item in self._addedBlockItems[timeStep + 1]:
+                self._scene.removeItem(item)
+
+            for item in self._removedBlockItems[timeStep + 1]:
+                self._scene.addItem(item)
