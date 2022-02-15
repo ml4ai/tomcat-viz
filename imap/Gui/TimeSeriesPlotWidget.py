@@ -1,13 +1,13 @@
 from typing import Dict, List
 from pyqtgraph import PlotWidget, mkPen
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QSizePolicy
 
 from imap.Common.Format import secondsToTime
 from imap.Parser.Estimates import TimeSeries
 
 
 class TimeSeriesPlotWidget(PlotWidget):
-
     NUM_VISIBLE_TIME_STEPS = 20
 
     def __init__(self, series: TimeSeries):
@@ -20,29 +20,31 @@ class TimeSeriesPlotWidget(PlotWidget):
         self._configure()
         self._initializePlot()
 
-        self.setMinimumHeight(150)
-
     def _configure(self):
         self.setBackground("white")
         self.setYRange(0, 1)
+        self.setMouseEnabled(x=False, y=False)
+        self.setMinimumHeight(150)
+        self.setMaximumHeight(150)
+        self.centralWidget.hideButtons()
 
         # self.palette = ...
 
     def _initializePlot(self):
-        self._plots = []
+        self._dataItems = []
         for _ in self._series.values:
             pen = mkPen(color=(0, 0, 255), width=2)  # get from palette later
-            self._plots.append(self.plot([], [], pen=pen))
+            self._dataItems.append(self.plot([], [], pen=pen))
             break
 
         # Baseline
         pen = mkPen(color=(255, 0, 0), width=1, style=Qt.DashLine)  # get from palette later
-        self._baselinePlot = self.plot([], [], pen=pen)
+        self._baselineDataItem = self.plot([], [], pen=pen)
 
     def updateFor(self, timeStep: int):
         timeStep = min(timeStep, self._series.size - 1)
         if timeStep >= 0:
-            for i, plot in enumerate(self._plots):
+            for i, plot in enumerate(self._dataItems):
                 if timeStep <= TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:
                     x = self._times[:timeStep]
                     y = self._series.values[i][:timeStep]
@@ -51,4 +53,4 @@ class TimeSeriesPlotWidget(PlotWidget):
                     y = self._series.values[i][timeStep - TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:timeStep]
 
                 plot.setData(x, y)
-                self._baselinePlot.setData(x, [0.5] * len(x))
+                self._baselineDataItem.setData(x, [0.5] * len(x))
