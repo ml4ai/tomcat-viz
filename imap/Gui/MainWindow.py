@@ -55,9 +55,9 @@ class MainWindow(QMainWindow):
         self._perturbationCheckbox.setEnabled(False)
 
         # Player Info
-        self._redPanel = PlayerPanelWidget("red")
-        self._greenPanel = PlayerPanelWidget("green")
-        self._bluePanel = PlayerPanelWidget("blue")
+        self._redPanel = PlayerPanelWidget(Constants.Colors.RED_PLAYER.value)
+        self._greenPanel = PlayerPanelWidget(Constants.Colors.GREEN_PLAYER.value)
+        self._bluePanel = PlayerPanelWidget(Constants.Colors.BLUE_PLAYER.value)
 
         # Map
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)

@@ -179,15 +179,15 @@ class MapWidget(QWidget):
     def _initializeTrajectories(self):
         # Initialize trajectories
         positions = self._getPlayersPositionsAt(0)
-        redPen = QPen(Qt.red, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        redPen = QPen(Qt.red, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         redPath = QPainterPath()
         redPath.moveTo(self._blockSize * (positions[0][0] + 0.5), self._blockSize * (positions[0][1] + 0.5))
 
-        greenPen = QPen(Qt.green, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        greenPen = QPen(Qt.green, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         greenPath = QPainterPath()
         greenPath.moveTo(self._blockSize * (positions[1][0] + 0.5), self._blockSize * (positions[1][1] + 0.5))
 
-        bluePen = QPen(Qt.blue, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        bluePen = QPen(Qt.blue, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         bluePath = QPainterPath()
         bluePath.moveTo(self._blockSize * (positions[2][0] + 0.5), self._blockSize * (positions[2][1] + 0.5))
 

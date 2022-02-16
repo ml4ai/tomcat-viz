@@ -2,6 +2,7 @@ from PyQt5.Qt import QGraphicsScene, Qt, QPen, QBrush, QFont, QGraphicsItem, QCo
 
 from imap.Gui.StampedRectItem import StampedRectItem
 from imap.Parser.MarkerType import MarkerType
+from imap.Common.Constants import Constants
 
 
 class CustomScene(QGraphicsScene):
@@ -13,13 +14,16 @@ class CustomScene(QGraphicsScene):
         return self._drawBlock(x, y, scale, blockSize, Qt.gray, Qt.lightGray)
 
     def drawRed(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawCircle(x, y, scale, blockSize, QColor("#E30B21"), QColor("#E30B21"))
+        color = QColor(Constants.Colors.RED_PLAYER.value)
+        return self._drawCircle(x, y, scale, blockSize, color, color)
 
     def drawGreen(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawCircle(x, y, scale, blockSize, QColor("#13F000"), QColor("#13F000"))
+        color = QColor(Constants.Colors.GREEN_PLAYER.value)
+        return self._drawCircle(x, y, scale, blockSize, color, color)
 
     def drawBlue(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawCircle(x, y, scale, blockSize, QColor("#0045FA"), QColor("#0045FA"))
+        color = QColor(Constants.Colors.BLUE_PLAYER.value)
+        return self._drawCircle(x, y, scale, blockSize, color, color)
 
     def drawVictimSignalBlock(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawStampedBlock("V", x, y, scale, blockSize, Qt.white, Qt.black, Qt.black)
@@ -28,20 +32,24 @@ class CustomScene(QGraphicsScene):
         return self._drawBlock(x, y, scale, blockSize, Qt.darkGray, Qt.darkGray, Qt.Dense5Pattern)
 
     def drawVictimA(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawStampedBlock("A", x, y, scale, blockSize, QColor("#02B860"), QColor("#02B860"), Qt.black)
+        color = QColor(Constants.Colors.VICTIM_A.value)
+        return self._drawStampedBlock("A", x, y, scale, blockSize, color, color, Qt.black)
 
     def drawVictimB(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawStampedBlock("B", x, y, scale, blockSize, QColor("#02B860"), QColor("#02B860"), Qt.black)
+        color = QColor(Constants.Colors.VICTIM_B.value)
+        return self._drawStampedBlock("B", x, y, scale, blockSize, color, color, Qt.black)
 
     def drawCriticalVictim(self, x: float, y: float, scale: float, blockSize: float):
-        # return self._drawBlock(x, y, scale, blockSize, QColor("#FACC09"), QColor("#FACC09"))
-        return self._drawStampedBlock("C", x, y, scale, blockSize, QColor("#FACC09"), QColor("#FACC09"), Qt.black)
+        color = QColor(Constants.Colors.CRITICAL_VICTIM.value)
+        return self._drawStampedBlock("C", x, y, scale, blockSize, color, color, Qt.black)
 
     def drawSafeVictimA(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawStampedBlock("A", x, y, scale, blockSize, QColor("#0AB7FC"), QColor("#0AB7FC"), Qt.black)
+        color = QColor(Constants.Colors.SAFE_VICTIM.value)
+        return self._drawStampedBlock("A", x, y, scale, blockSize, color, color, Qt.black)
 
     def drawRubbleCollapseBlock(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawBlock(x, y, scale, blockSize, QColor("#8400EB"), QColor("#8400EB"))
+        color = QColor(Constants.Colors.THREAT_ACTIVATION.value)
+        return self._drawBlock(x, y, scale, blockSize, color, color)
 
     def drawDoor(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.black, Qt.white, Qt.Dense7Pattern)
@@ -66,7 +74,8 @@ class CustomScene(QGraphicsScene):
         elif type == MarkerType.SOS:
             label = "S"
 
-        return self._drawStampedBlock(label, x, y, scale, blockSize, QColor("#E602D5"), QColor("#E602D5"), Qt.black)
+        color = QColor(Constants.Colors.MARKER.value)
+        return self._drawStampedBlock(label, x, y, scale, blockSize, color, color, Qt.black)
 
     def addItem(self, item: QGraphicsItem) -> None:
         if isinstance(item, StampedRectItem):
