@@ -1,4 +1,4 @@
-from typing import Any, List, Set, TextIO
+from typing import Any, Dict, List, Set, TextIO
 import os
 import json
 from dateutil.parser import parse
@@ -99,7 +99,8 @@ class Trial:
         "observations/events/player/victim_picked_up",
         "observations/events/player/victim_placed",
         "observations/events/player/tool_used",
-        "observations/events/player/marker_removed"
+        "observations/events/player/marker_removed",
+        "observations/events/player/rubble_destroyed"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -111,6 +112,9 @@ class Trial:
 
         self.placedMarkers: List[Set[Marker]] = []
         self.removedMarkers: List[Set[Marker]] = []
+
+        # List of rubbles added or removed in each position per time step
+        self.rubbleCounts: List[Dict[Position, int]] = []
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
@@ -129,6 +133,7 @@ class Trial:
             "removed_markers": self.removedMarkers,
             "chat_messages": self.chatMessages,
             "players_actions": self.playersActions,
+            "rubble_counts": self.rubbleCounts
         }
 
         with open(filepath, "wb") as f:
@@ -145,6 +150,7 @@ class Trial:
         self.removedMarkers = trialPackage["removed_markers"]
         self.chatMessages = trialPackage["chat_messages"]
         self.playersActions = trialPackage["players_actions"]
+        self.rubbleCounts = trialPackage["rubble_counts"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -160,6 +166,7 @@ class Trial:
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
         self.placedMarkers = []
         self.removedMarkers = []
+        self.rubbleCounts = []
 
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
@@ -171,6 +178,7 @@ class Trial:
         currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
         currentPlayersActions = [Constants.Action.NONE.value for _ in range(Constants.NUM_ROLES)]
+        currentRubbleCounts = {}
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -289,6 +297,16 @@ class Trial:
                         currentPlayersActions[
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE.value
 
+                elif Trial._isMessageOf(message, "event", "Event:RubbleDestroyed"):
+                    x = message["data"]["rubble_x"] - self._map.metadata["min_x"]
+                    y = message["data"]["rubble_z"] - self._map.metadata["min_y"]
+                    position = Position(x, y)
+
+                    if position in currentRubbleCounts:
+                        currentRubbleCounts[position] -= 1
+                    else:
+                        currentRubbleCounts[position] = -1
+
                 elif Trial._isMessageOf(message, "observation", "State"):
                     # Collect observations for the current time step
                     missionTimer = message["data"]["mission_timer"]
@@ -307,11 +325,13 @@ class Trial:
                             for playerIdx, actions in enumerate(self.playersActions):
                                 actions[t] = currentPlayersActions[playerIdx]
                                 currentPlayersActions[playerIdx] = Constants.Action.NONE.value
+                            self.rubbleCounts.append(currentRubbleCounts.copy())
 
                         nextTimeStep = elapsedSeconds + 1
 
                         currentPlacedMarkers.clear()
                         currentRemovedMarkers.clear()
+                        currentRubbleCounts.clear()
 
                     if nextTimeStep == self._timeSteps:
                         break

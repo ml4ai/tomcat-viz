@@ -65,7 +65,13 @@ class MapWidget(QWidget):
         # A list of marker block items draw in a specific position. We will use this list to remove all the markers in
         # a given position when the marker in the top is removed. This is a workaround for marker replacement. We just
         # draw a new marker on top instead of looking for the previous one to remove.
-        self._markers: Dict[Position, List[QGraphicsItem]] = {}
+        self._markerItems: Dict[Position, List[QGraphicsItem]] = {}
+
+        # The number of rubbles per position (> 1 if rubbles are stacked on top of each other)
+        self._rubbleCounts: Dict[Position, int] = {}
+
+        # Rubble item drawn in a given position
+        self._rubbleItems: Dict[Position, QGraphicsItem] = {}
 
     def loadMap(self, mapObject: Map):
         self._map = mapObject
@@ -117,12 +123,20 @@ class MapWidget(QWidget):
                 continue
 
             coordinates = row[0].split()
-            x, y = self._translatePosition(int(coordinates[0]), int(coordinates[2]))
+            x = int(coordinates[0]) - self._map.metadata["min_x"]
+            y = int(coordinates[2]) - self._map.metadata["min_y"]
+            position = Position(x, y)
             item = None
             if row[1] == "block_signal_victim":
                 item = self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
             elif row[1] == "gravel":
                 item = self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
+
+                # Update number of rubbles per position
+                if position in self._rubbleCounts:
+                    self._rubbleCounts[position] += 1
+                else:
+                    self._rubbleCounts[position] = 1
             elif row[1] == "block_victim_1":
                 item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_victim_1b":
@@ -252,6 +266,7 @@ class MapWidget(QWidget):
                     self._removedBlockItems.append([])
 
                 self._drawMarkers(timeStep)
+                self._drawRubble(timeStep)
 
             else:
                 for item in self._addedBlockItems[timeStep]:
@@ -267,16 +282,16 @@ class MapWidget(QWidget):
             for item in self._removedBlockItems[timeStep + 1]:
                 self._scene.addItem(item)
 
-    def _drawMarkers(self, timeStep):
+    def _drawMarkers(self, timeStep: int):
         self._eraseDestroyedMarkers(timeStep)
         self._drawPlacedMarkers(timeStep)
 
     def _eraseDestroyedMarkers(self, timeStep: int):
         itemsToRemove = []
         for marker in self._trial.removedMarkers[timeStep]:
-            if marker.position in self._markers:
+            if marker.position in self._markerItems:
                 # Removes all markers in the position
-                for item in self._markers[marker.position]:
+                for item in self._markerItems[marker.position]:
                     itemsToRemove.append(item)
                     self._scene.removeItem(item)
             else:
@@ -291,9 +306,27 @@ class MapWidget(QWidget):
             item = self._scene.drawMarker(marker.markerType, marker.position.x, marker.position.y, self._blockSize,
                                           self._blockSize)
             itemsToAdd.append(item)
-            if marker.position in self._markers:
-                self._markers[marker.position].append(item)
+            if marker.position in self._markerItems:
+                self._markerItems[marker.position].append(item)
             else:
-                self._markers[marker.position] = [item]
+                self._markerItems[marker.position] = [item]
 
         self._addedBlockItems[timeStep] = itemsToAdd
+
+    def _drawRubble(self, timeStep: int):
+        for position, count in self._trial.rubbleCounts[timeStep].items():
+            if position in self._rubbleCounts:
+                self._rubbleCounts[position] += count
+
+                if self._rubbleCounts[position] == 0:
+                    item = self._rubbleItems[position]
+                    self._scene.removeItem(item)
+                    self._removedBlockItems[timeStep].append(item)
+                    del self._rubbleCounts[position]
+            else:
+                if count > 0:
+                    # Some messages are inconsistent and show rubble destroyed when there is no rubble
+                    self._rubbleCounts[position] = count
+                    item = self._scene.drawGravel(position.x, position.y, self._blockSize, self._blockSize)
+                    self._rubbleItems[position] = item
+                    self._addedBlockItems[timeStep].append(item)
