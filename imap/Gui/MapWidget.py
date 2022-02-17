@@ -54,7 +54,6 @@ class MapWidget(QWidget):
         self._currPlayersBlocks = []
         self._playersPaths = []
         self._playersPathItems = []
-        self._markerItems = []
 
         # Items added and removed to/from the scene per time step. It will cache the objects so we don't need to
         # recreate then if we go forth, back and forth
@@ -63,10 +62,8 @@ class MapWidget(QWidget):
         self._addedBlockItems = [[]]
         self._removedBlockItems = [[]]
 
-        # A list of marker block items draw in a specific position. We will use this list to remove all the markers in
-        # a given position when the marker in the top is removed. This is a workaround for marker replacement. We just
-        # draw a new marker on top instead of looking for the previous one to remove.
-        self._markerItems: Dict[Position, List[QGraphicsItem]] = {}
+        # Marker item drawn in a given position
+        self._markerItems: Dict[Position, QGraphicsItem] = {}
 
         # The number of rubbles per position (> 1 if rubbles are stacked on top of each other)
         self._rubbleCounts: Dict[Position, int] = {}
@@ -296,31 +293,28 @@ class MapWidget(QWidget):
         self._drawPlacedMarkers(timeStep)
 
     def _eraseDestroyedMarkers(self, timeStep: int):
-        itemsToRemove = []
         for marker in self._trial.removedMarkers[timeStep]:
             if marker.position in self._markerItems:
-                # Removes all markers in the position
-                for item in self._markerItems[marker.position]:
-                    itemsToRemove.append(item)
-                    self._scene.removeItem(item)
+                item = self._markerItems[marker.position]
+                self._removedBlockItems[timeStep].append(item)
+                self._scene.removeItem(item)
+                del self._markerItems[marker.position]
             else:
                 print(
                     f"[{secondsToTime(timeStep)}]: Marker {marker.markerType} at {marker.position} not found.")
 
-        self._removedBlockItems[timeStep] = itemsToRemove
-
     def _drawPlacedMarkers(self, timeStep: int):
-        itemsToAdd = []
         for marker in self._trial.placedMarkers[timeStep]:
+            if marker.position in self._markerItems:
+                # Remove old marker before adding the new one
+                item = self._markerItems[marker.position]
+                self._removedBlockItems[timeStep].append(item)
+                self._scene.removeItem(item)
+
             item = self._scene.drawMarker(marker.markerType, marker.position.x, marker.position.y, self._blockSize,
                                           self._blockSize)
-            itemsToAdd.append(item)
-            if marker.position in self._markerItems:
-                self._markerItems[marker.position].append(item)
-            else:
-                self._markerItems[marker.position] = [item]
-
-        self._addedBlockItems[timeStep] = itemsToAdd
+            self._markerItems[marker.position] = item
+            self._addedBlockItems[timeStep].append(item)
 
     def _drawRubble(self, timeStep: int):
         for position, count in self._trial.rubbleCounts[timeStep].items():
@@ -365,7 +359,6 @@ class MapWidget(QWidget):
                 item = self._victimItems[victim.position]
                 self._scene.removeItem(item)
                 self._removedBlockItems[timeStep].append(item)
-                del self._victimItems[victim.position]
 
                 # Create a safe victim block in the same position.
                 item = None
@@ -375,12 +368,12 @@ class MapWidget(QWidget):
                 elif victim.victimType == Constants.VictimType.B:
                     item = self._scene.drawSafeVictimB(victim.position.x, victim.position.y, self._blockSize,
                                                        self._blockSize)
-                elif victim.victimType == Constants.VictimType.CRITICAL:
+                else:
                     item = self._scene.drawSafeCriticalVictim(victim.position.x, victim.position.y, self._blockSize,
                                                               self._blockSize)
-                if item is not None:
-                    self._victimItems[victim.position] = item
-                    self._addedBlockItems[timeStep].append(item)
+
+                self._victimItems[victim.position] = item
+                self._addedBlockItems[timeStep].append(item)
             else:
                 print(
                     f"[{secondsToTime(timeStep)}]: Rescuing victim {victim.victimType} at {victim.position} not found.")
