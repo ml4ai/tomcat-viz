@@ -14,7 +14,7 @@ from imap.Common.Format import secondsToTime
 from imap.Common.Constants import Constants
 from imap.Gui.CustomScene import CustomScene
 from imap.Parser.Map import Map
-from imap.Parser.Trial import Trial, Position
+from imap.Parser.Trial import Trial, Position, Victim
 
 
 class SceneObjectAction:
@@ -139,7 +139,7 @@ class MapWidget(QWidget):
                     # to know how many more there are in the stack per position
                     self._rubbleCounts[position] += 1
                 else:
-                    item = self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
+                    item = self._scene.drawRubble(x, y, self._blockSize, self._blockSize)
                     self._rubbleCounts[position] = 1
                     self._rubbleItems[position] = item
             elif row[1] == "block_victim_1":
@@ -336,7 +336,7 @@ class MapWidget(QWidget):
                 if count > 0:
                     # Some messages are inconsistent and show rubble destroyed when there is no rubble
                     self._rubbleCounts[position] = count
-                    item = self._scene.drawGravel(position.x, position.y, self._blockSize, self._blockSize)
+                    item = self._scene.drawRubble(position.x, position.y, self._blockSize, self._blockSize)
                     self._rubbleItems[position] = item
                     self._addedBlockItems[timeStep].append(item)
 
@@ -347,6 +347,19 @@ class MapWidget(QWidget):
 
     def _drawSavedVictims(self, timeStep: int):
         for victim in self._trial.savedVictims[timeStep]:
+            # We only process if the victim was not picked up in the same time step, to avoid adding
+            # (changing the victim to the new type) and removing it (if it's picked up) in the same time step.
+            if victim.victimType == Constants.VictimType.A:
+                newType = Constants.VictimType.SAFE_A
+            elif victim.victimType == Constants.VictimType.B:
+                newType = Constants.VictimType.SAFE_B
+            else:
+                newType = Constants.VictimType.SAFE_CRITICAL
+
+            safeVictim = Victim(newType, victim.position.x, victim.position.y)
+            if safeVictim in self._trial.pickedUpVictims[timeStep]:
+                continue
+
             if victim.position in self._victimItems:
                 # Remove current victim block
                 item = self._victimItems[victim.position]
@@ -371,7 +384,7 @@ class MapWidget(QWidget):
             else:
                 print(
                     f"[{secondsToTime(timeStep)}]: Rescuing victim {victim.victimType} at {victim.position} not found.")
-                self._scene.drawRed(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+                self._scene.drawMissingVictim(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
 
     def _drawPickedUpVictims(self, timeStep: int):
         for victim in self._trial.pickedUpVictims[timeStep]:
@@ -384,7 +397,7 @@ class MapWidget(QWidget):
             else:
                 print(
                     f"[{secondsToTime(timeStep)}]: Picking up victim {victim.victimType} at {victim.position} not found.")
-                self._scene.drawGreen(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+                self._scene.drawMissingVictim(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
 
     def _drawPlacedVictims(self, timeStep: int):
         for victim in self._trial.placedVictims[timeStep]:

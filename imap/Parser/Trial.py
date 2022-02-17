@@ -409,7 +409,9 @@ class Trial:
                                 currentChatMessages[playerIdx].clear()
                             for playerIdx, actions in enumerate(self.playersActions):
                                 actions.append(currentPlayersActions[playerIdx])
-                                currentPlayersActions[playerIdx] = Constants.Action.NONE
+                                if currentPlayersActions[playerIdx] != Constants.Action.CARRYING_VICTIM:
+                                    # If the players are carrying victims. The action only stops after they place them.
+                                    currentPlayersActions[playerIdx] = Constants.Action.NONE
                             self.rubbleCounts.append(currentRubbleCounts.copy())
                             self.activeBlackout.append(currentActiveBlackout)
                             self.savedVictims.append(currentSavedVictims.copy())

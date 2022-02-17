@@ -35,6 +35,7 @@ class Constants:
         THREAT_ACTIVATION = "#8400EB"
         RUBBLE = "#E30B21"
         MARKER = "#E602D5"
+        INCONSISTENCY = "#FA8B03"
 
     # Blocks
     class BlockType(Enum):

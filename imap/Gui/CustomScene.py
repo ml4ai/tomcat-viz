@@ -27,7 +27,7 @@ class CustomScene(QGraphicsScene):
     def drawVictimSignalBlock(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawStampedBlock("V", x, y, scale, blockSize, Qt.white, Qt.black, Qt.black)
 
-    def drawGravel(self, x: float, y: float, scale: float, blockSize: float):
+    def drawRubble(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.darkGray, Qt.darkGray, Qt.Dense5Pattern)
 
     def drawVictimA(self, x: float, y: float, scale: float, blockSize: float):
@@ -60,6 +60,10 @@ class CustomScene(QGraphicsScene):
 
     def drawDoor(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.black, Qt.white, Qt.Dense7Pattern)
+
+    def drawMissingVictim(self, x: float, y: float, scale: float, blockSize: float):
+        color = QColor(Constants.Colors.INCONSISTENCY.value)
+        return self._drawStampedBlock("X", x, y, scale, blockSize, color, color, Qt.black)
 
     def drawEmptyBlock(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.white, Qt.white)
