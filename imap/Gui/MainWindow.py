@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog
+from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
 
 from imap.Gui.Utils import createLabel
@@ -71,6 +71,12 @@ class MainWindow(QMainWindow):
         self._timeSlider.setRange(0, 899)
         self._timeSlider.setSingleStep(1)
         self._timeSlider.valueChanged.connect(self._updateTimerAction)
+        self._rewindButton = QPushButton("-")
+        self._rewindButton.setEnabled(False)
+        self._forwardButton = QPushButton("+")
+        self._forwardButton.setEnabled(False)
+        self._rewindButton.clicked.connect(self._rewindTimer)
+        self._forwardButton.clicked.connect(self._forwardTimer)
 
         self._chatWidget = SpeechWidget()
         self._estimatesWidget = EstimatesWidget()
@@ -105,7 +111,7 @@ class MainWindow(QMainWindow):
         layout.setFormAlignment(Qt.AlignLeft)
         layout.addRow(createLabel("Trial:", self._boldLabelFont), self._trialLabel)
         layout.addRow(createLabel("Team:", self._boldLabelFont), self._teamLabel)
-        parentLayout.addLayout(layout, 5)
+        parentLayout.addLayout(layout, 3)
 
     def _createGameInfoPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
@@ -141,6 +147,8 @@ class MainWindow(QMainWindow):
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
+        layout.addWidget(self._rewindButton)
+        layout.addWidget(self._forwardButton)
         layout.addWidget(self._timeSlider, 95)
         layout.addWidget(self._timerLabel, 5)
         parentLayout.addLayout(layout, 5)
@@ -182,12 +190,26 @@ class MainWindow(QMainWindow):
 
     # Actions
     def _updateTimerAction(self, value):
+        if value == 0:
+            self._rewindButton.setEnabled(False)
+        else:
+            self._rewindButton.setEnabled(True)
+
+
         self._updateHeaderInfo(value)
 
         # Update custom widgets
         self._mapWidget.updateFor(value)
         self._chatWidget.updateFor(value)
         self._estimatesWidget.updateFor(value)
+
+    def _rewindTimer(self):
+        newSliderValue = self._timeSlider.value() - 1
+        self._timeSlider.setValue(newSliderValue)
+
+    def _forwardTimer(self):
+        newSliderValue = self._timeSlider.value() + 1
+        self._timeSlider.setValue(newSliderValue)
 
     def _loadTrialFromMetadataAction(self, value):
         filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]
@@ -212,6 +234,7 @@ class MainWindow(QMainWindow):
     def _initializeTrial(self):
         self._timeSlider.setValue(0)
         self._timeSlider.setEnabled(True)
+        self._forwardButton.setEnabled(True)
         self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
         self._chatWidget.loadTrial(self._trial)

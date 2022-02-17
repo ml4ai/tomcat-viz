@@ -6,7 +6,6 @@ import numpy as np
 import pickle
 
 from imap.Parser.Map import Map
-from imap.Parser.MarkerType import MarkerType
 from imap.Common.Constants import Constants
 
 
@@ -32,6 +31,61 @@ class ChatMessage:
         return hash(f"{self.sender}#{self.addressee}#{self.text}")
 
 
+# class Block:
+#
+#     def __init__(self, blockType: Constants.BlockType, x: float, y: float):
+#         self.blockType = blockType
+#         self.x = x
+#         self.y = y
+#
+#     def __eq__(self, other):
+#         return (isinstance(other, self.__class__) and
+#                 getattr(other, 'blockType', None) == self.blockType and
+#                 getattr(other, 'x', None) == self.x and
+#                 getattr(other, 'y', None) == self.y)
+#
+#     def __hash__(self):
+#         return hash(f"{self.blockType}#{self.x}#{self.y}")
+#
+#     def __repr__(self):
+#         return f"{self.blockType}#{self.x}#{self.y}"
+
+class Position:
+
+    def __init__(self, x: float, y: float):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                getattr(other, 'x', None) == self.x and
+                getattr(other, 'y', None) == self.y)
+
+    def __hash__(self):
+        return hash(f"{self.x}#{self.y}")
+
+    def __repr__(self):
+        return f"{self.x}#{self.y}"
+
+
+class Marker:
+    def __init__(self, markerType: Constants.MarkerType, x: float, y: float):
+        super().__init__()
+        self.markerType = markerType
+        self.position = Position(x, y)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                getattr(other, 'markerType', None) == self.markerType and
+                getattr(other, 'position', None) == self.position)
+
+    def __hash__(self):
+        return hash(f"{self.markerType}#{self.position}")
+
+    def __repr__(self):
+        return f"{self.markerType}#{self.position}"
+
+
 class Trial:
     USED_TOPICS = [
         "trial",
@@ -44,7 +98,8 @@ class Trial:
         "observations/events/player/triage",
         "observations/events/player/victim_picked_up",
         "observations/events/player/victim_placed",
-        "observations/events/player/tool_used"
+        "observations/events/player/tool_used",
+        "observations/events/player/marker_removed"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -54,7 +109,8 @@ class Trial:
         self.metadata = {}
         self.scores = np.array([])
 
-        self.placedMarkers = []
+        self.placedMarkers: List[Set[Marker]] = []
+        self.removedMarkers: List[Set[Marker]] = []
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
@@ -70,6 +126,7 @@ class Trial:
             "scores": self.scores,
             "players_positions": self.playersPositions,
             "placed_markers": self.placedMarkers,
+            "removed_markers": self.removedMarkers,
             "chat_messages": self.chatMessages,
             "players_actions": self.playersActions,
         }
@@ -85,6 +142,7 @@ class Trial:
         self.scores = trialPackage["scores"]
         self.playersPositions = trialPackage["players_positions"]
         self.placedMarkers = trialPackage["placed_markers"]
+        self.removedMarkers = trialPackage["removed_markers"]
         self.chatMessages = trialPackage["chat_messages"]
         self.playersActions = trialPackage["players_actions"]
 
@@ -101,6 +159,7 @@ class Trial:
 
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
         self.placedMarkers = []
+        self.removedMarkers = []
 
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
@@ -108,7 +167,8 @@ class Trial:
 
         currentScore = 0
         currentPlayersPositions = [np.zeros(2) for _ in range(Constants.NUM_ROLES)]
-        currentPlacedMarkers = []
+        currentPlacedMarkers = set()
+        currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
         currentPlayersActions = [Constants.Action.NONE.value for _ in range(Constants.NUM_ROLES)]
         for message in messages:
@@ -159,26 +219,36 @@ class Trial:
             if missionStarted:
                 if Trial._isMessageOf(message, "observation", "Event:Scoreboard"):
                     currentScore = message["data"]["scoreboard"]["TeamScore"]
+
                 elif Trial._isMessageOf(message, "event", "Event:MarkerPlaced"):
                     # We don't care about who placed it for the moment
-                    markerType = message["data"]["type"]
+                    markerType = Trial._getMarkerTypeFromStringType(message["data"]["type"])
                     x = message["data"]["marker_x"] - self._map.metadata["min_x"]
                     y = message["data"]["marker_z"] - self._map.metadata["min_y"]
 
-                    if "novictim" in markerType:
-                        currentPlacedMarkers.append((MarkerType.NO_VICTIM, x, y))
-                    elif "abrasion" in markerType:
-                        currentPlacedMarkers.append((MarkerType.VICTIM_A, x, y))
-                    elif "bonedamage" in markerType:
-                        currentPlacedMarkers.append((MarkerType.VICTIM_B, x, y))
-                    elif "regularvictim" in markerType:
-                        currentPlacedMarkers.append((MarkerType.REGULAR_VICTIM, x, y))
-                    elif "criticalvictim" in markerType:
-                        currentPlacedMarkers.append((MarkerType.CRITICAL_VICTIM, x, y))
-                    elif "threat" in markerType:
-                        currentPlacedMarkers.append((MarkerType.THREAT_ROOM, x, y))
-                    elif "sos" in markerType:
-                        currentPlacedMarkers.append((MarkerType.SOS, x, y))
+                    marker = Marker(markerType, x, y)
+                    if marker in currentRemovedMarkers:
+                        # It was added previously, and added to be removed in this time step. We just need to remove it
+                        # from the list of removals.
+                        currentRemovedMarkers.discard(marker)
+                    else:
+                        # It was never added. We include it in the list of markers to be created
+                        currentPlacedMarkers.add(marker)
+
+                elif Trial._isMessageOf(message, "event", "Event:MarkerRemoved"):
+                    markerType = Trial._getMarkerTypeFromStringType(message["data"]["type"])
+                    x = message["data"]["marker_x"] - self._map.metadata["min_x"]
+                    y = message["data"]["marker_z"] - self._map.metadata["min_y"]
+
+                    marker = Marker(markerType, x, y)
+                    if marker in currentPlacedMarkers:
+                        # It was placed and removed within a time step.
+                        # Just remove from the list of markers to be added.
+                        currentPlacedMarkers.discard(marker)
+                    else:
+                        # It was added previously, so we must add it to the list of removals of the current time step
+                        currentRemovedMarkers.add(marker)
+
                 elif Trial._isMessageOf(message, "chat", "Event:Chat"):
                     sender = message["data"]["sender"]
                     jsonText = json.loads(message["data"]["text"])
@@ -186,16 +256,19 @@ class Trial:
                         playerColor = playerIdToColor[playerId]
                         chatMessage = ChatMessage(sender, playerId, jsonText["color"], jsonText["text"])
                         currentChatMessages[Constants.PLAYER_COLOR_MAP[playerColor].value].add(chatMessage)
+
                 elif Trial._isMessageOf(message, "event", "Event:VictimPickedUp"):
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM.value
+
                 elif Trial._isMessageOf(message, "event", "Event:VictimPlaced"):
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+
                 elif Trial._isMessageOf(message, "event", "Event:Triage"):
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
@@ -206,6 +279,7 @@ class Trial:
                     else:
                         currentPlayersActions[
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+
                 elif Trial._isMessageOf(message, "event", "Event:ToolUsed"):
                     tool = message["data"]["tool_type"].lower()
                     target_block = message["data"]["target_block_type"].lower()
@@ -216,13 +290,15 @@ class Trial:
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE.value
 
                 elif Trial._isMessageOf(message, "observation", "State"):
+                    # Collect observations for the current time step
                     missionTimer = message["data"]["mission_timer"]
                     elapsedSeconds = self._missionTimerToElapsedSeconds(missionTimer)
 
                     if elapsedSeconds >= nextTimeStep:
                         for t in range(nextTimeStep, elapsedSeconds + 1):
                             self.scores[t] = currentScore
-                            self.placedMarkers.append(currentPlacedMarkers)
+                            self.placedMarkers.append(currentPlacedMarkers.copy())
+                            self.removedMarkers.append(currentRemovedMarkers.copy())
                             for playerIdx, positions in enumerate(self.playersPositions):
                                 positions[t] = currentPlayersPositions[playerIdx]
                             for playerIdx, messages in enumerate(self.chatMessages):
@@ -234,7 +310,8 @@ class Trial:
 
                         nextTimeStep = elapsedSeconds + 1
 
-                        currentPlacedMarkers = []
+                        currentPlacedMarkers.clear()
+                        currentRemovedMarkers.clear()
 
                     if nextTimeStep == self._timeSteps:
                         break
@@ -272,6 +349,26 @@ class Trial:
     def _isMessageOf(message: json, type: str, subType: str):
         return message["header"]["message_type"].lower() == type.lower() and message["msg"][
             "sub_type"].lower() == subType.lower()
+
+    @staticmethod
+    def _getMarkerTypeFromStringType(stringType: str) -> Constants.MarkerType:
+        markerType = None
+        if "novictim" in stringType:
+            markerType = Constants.MarkerType.NO_VICTIM
+        elif "abrasion" in stringType:
+            markerType = Constants.MarkerType.VICTIM_A
+        elif "bonedamage" in stringType:
+            markerType = Constants.MarkerType.VICTIM_B
+        elif "regularvictim" in stringType:
+            markerType = Constants.MarkerType.REGULAR_VICTIM
+        elif "criticalvictim" in stringType:
+            markerType = Constants.MarkerType.CRITICAL_VICTIM
+        elif "threat" in stringType:
+            markerType = Constants.MarkerType.THREAT_ROOM
+        elif "sos" in stringType:
+            markerType = Constants.MarkerType.SOS
+
+        return markerType
 
 # if __name__ == "__main__":
 #     parser = Trial(

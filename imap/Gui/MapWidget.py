@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 import json
 import csv
@@ -10,9 +10,10 @@ import codecs
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen, QGraphicsItem
 
+from imap.Common.Format import secondsToTime
 from imap.Gui.CustomScene import CustomScene
 from imap.Parser.Map import Map
-from imap.Parser.Trial import Trial
+from imap.Parser.Trial import Trial, Position
 
 
 class SceneObjectAction:
@@ -60,6 +61,11 @@ class MapWidget(QWidget):
         self._removedPlayerItems = [[]]
         self._addedBlockItems = [[]]
         self._removedBlockItems = [[]]
+
+        # A list of marker block items draw in a specific position. We will use this list to remove all the markers in
+        # a given position when the marker in the top is removed. This is a workaround for marker replacement. We just
+        # draw a new marker on top instead of looking for the previous one to remove.
+        self._markers: Dict[Position, List[QGraphicsItem]] = {}
 
     def loadMap(self, mapObject: Map):
         self._map = mapObject
@@ -159,7 +165,7 @@ class MapWidget(QWidget):
                 for item in self._removedPlayerItems[timeStep]:
                     self._scene.removeItem(item)
         else:
-            # Reverse the actions of the subsequente time step
+            # Reverse the actions of the subsequent time step
             for item in self._addedPlayerItems[timeStep + 1]:
                 self._scene.removeItem(item)
 
@@ -245,14 +251,8 @@ class MapWidget(QWidget):
                     self._addedBlockItems.append([])
                     self._removedBlockItems.append([])
 
-                blocks = []
-                for marker in self._trial.placedMarkers[timeStep]:
-                    blocks.append(
-                        self._scene.drawMarker(marker[0], marker[1], marker[2], self._blockSize, self._blockSize))
+                self._drawMarkers(timeStep)
 
-                # Other blocks
-
-                self._addedBlockItems[timeStep] = blocks
             else:
                 for item in self._addedBlockItems[timeStep]:
                     self._scene.addItem(item)
@@ -266,3 +266,34 @@ class MapWidget(QWidget):
 
             for item in self._removedBlockItems[timeStep + 1]:
                 self._scene.addItem(item)
+
+    def _drawMarkers(self, timeStep):
+        self._eraseDestroyedMarkers(timeStep)
+        self._drawPlacedMarkers(timeStep)
+
+    def _eraseDestroyedMarkers(self, timeStep: int):
+        itemsToRemove = []
+        for marker in self._trial.removedMarkers[timeStep]:
+            if marker.position in self._markers:
+                # Removes all markers in the position
+                for item in self._markers[marker.position]:
+                    itemsToRemove.append(item)
+                    self._scene.removeItem(item)
+            else:
+                print(
+                    f"[{secondsToTime(timeStep)}]: Marker {marker.markerType} at {marker.position} not found.")
+
+        self._removedBlockItems[timeStep] = itemsToRemove
+
+    def _drawPlacedMarkers(self, timeStep: int):
+        itemsToAdd = []
+        for marker in self._trial.placedMarkers[timeStep]:
+            item = self._scene.drawMarker(marker.markerType, marker.position.x, marker.position.y, self._blockSize,
+                                          self._blockSize)
+            itemsToAdd.append(item)
+            if marker.position in self._markers:
+                self._markers[marker.position].append(item)
+            else:
+                self._markers[marker.position] = [item]
+
+        self._addedBlockItems[timeStep] = itemsToAdd
