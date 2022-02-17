@@ -100,7 +100,9 @@ class Trial:
         "observations/events/player/victim_placed",
         "observations/events/player/tool_used",
         "observations/events/player/marker_removed",
-        "observations/events/player/rubble_destroyed"
+        "observations/events/player/rubble_destroyed",
+        "observations/events/mission/perturbation",
+        "observations/events/player/rubble_collapse"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -116,11 +118,13 @@ class Trial:
         # List of rubbles added or removed in each position per time step
         self.rubbleCounts: List[Dict[Position, int]] = []
 
+        self.activeBlackout: List[bool] = []
+
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
-        self.playersPositions = []
-        self.chatMessages = []
-        self.playersActions = []
+        self.playersPositions: List[np.ndarray] = []
+        self.chatMessages: List[List[Set[ChatMessage]]] = []
+        self.playersActions: List[List[Constants.Action]] = []
 
     def save(self, filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -133,7 +137,8 @@ class Trial:
             "removed_markers": self.removedMarkers,
             "chat_messages": self.chatMessages,
             "players_actions": self.playersActions,
-            "rubble_counts": self.rubbleCounts
+            "rubble_counts": self.rubbleCounts,
+            "active_blackout": self.activeBlackout
         }
 
         with open(filepath, "wb") as f:
@@ -151,6 +156,7 @@ class Trial:
         self.chatMessages = trialPackage["chat_messages"]
         self.playersActions = trialPackage["players_actions"]
         self.rubbleCounts = trialPackage["rubble_counts"]
+        self.activeBlackout = trialPackage["active_blackout"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -170,15 +176,18 @@ class Trial:
 
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
-        self.playersActions = [np.ones(self._timeSteps, dtype=np.int16) for _ in range(Constants.NUM_ROLES)]
+        self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
+
+        self.activeBlackout = []
 
         currentScore = 0
         currentPlayersPositions = [np.zeros(2) for _ in range(Constants.NUM_ROLES)]
         currentPlacedMarkers = set()
         currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
-        currentPlayersActions = [Constants.Action.NONE.value for _ in range(Constants.NUM_ROLES)]
+        currentPlayersActions = [Constants.Action.NONE for _ in range(Constants.NUM_ROLES)]
         currentRubbleCounts = {}
+        currentActiveBlackout = False
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -269,13 +278,13 @@ class Trial:
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
                     currentPlayersActions[
-                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM.value
+                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM
 
                 elif Trial._isMessageOf(message, "event", "Event:VictimPlaced"):
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
                     currentPlayersActions[
-                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+                        Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
 
                 elif Trial._isMessageOf(message, "event", "Event:Triage"):
                     playerId = message["data"]["participant_id"]
@@ -283,10 +292,10 @@ class Trial:
 
                     if message["data"]["triage_state"].lower() == "in_progress":
                         currentPlayersActions[
-                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.HEALING_VICTIM.value
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.HEALING_VICTIM
                     else:
                         currentPlayersActions[
-                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE.value
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
 
                 elif Trial._isMessageOf(message, "event", "Event:ToolUsed"):
                     tool = message["data"]["tool_type"].lower()
@@ -295,7 +304,7 @@ class Trial:
                         playerId = message["data"]["participant_id"]
                         playerColor = playerIdToColor[playerId]
                         currentPlayersActions[
-                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE.value
+                            Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE
 
                 elif Trial._isMessageOf(message, "event", "Event:RubbleDestroyed"):
                     x = message["data"]["rubble_x"] - self._map.metadata["min_x"]
@@ -306,6 +315,22 @@ class Trial:
                         currentRubbleCounts[position] -= 1
                     else:
                         currentRubbleCounts[position] = -1
+
+                elif Trial._isMessageOf(message, "event", "Event:Perturbation"):
+                    if message["data"]["type"].lower() == "blackout":
+                        currentActiveBlackout = message["data"]["state"].lower() == "start"
+
+                elif Trial._isMessageOf(message, "event", "Event:RubbleCollapse"):
+                    # How many are stacked on top of each other
+                    counts = abs(message["data"]["toBlock_y"] - message["data"]["fromBlock_y"]) + 1
+
+                    for x in range(message["data"]["fromBlock_x"], message["data"]["toBlock_x"] + 1):
+                        for y in range(message["data"]["fromBlock_z"], message["data"]["toBlock_z"] + 1):
+                            position = Position(x - self._map.metadata["min_x"], y - self._map.metadata["min_y"])
+                            if position in currentRubbleCounts:
+                                currentRubbleCounts[position] += counts
+                            else:
+                                currentRubbleCounts[position] = counts
 
                 elif Trial._isMessageOf(message, "observation", "State"):
                     # Collect observations for the current time step
@@ -323,9 +348,10 @@ class Trial:
                                 messages.append(currentChatMessages[playerIdx].copy())
                                 currentChatMessages[playerIdx].clear()
                             for playerIdx, actions in enumerate(self.playersActions):
-                                actions[t] = currentPlayersActions[playerIdx]
-                                currentPlayersActions[playerIdx] = Constants.Action.NONE.value
+                                actions.append(currentPlayersActions[playerIdx])
+                                currentPlayersActions[playerIdx] = Constants.Action.NONE
                             self.rubbleCounts.append(currentRubbleCounts.copy())
+                            self.activeBlackout.append(currentActiveBlackout)
 
                         nextTimeStep = elapsedSeconds + 1
 

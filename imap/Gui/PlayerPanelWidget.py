@@ -19,13 +19,13 @@ class PlayerPanelWidget(QWidget):
     def setEquippedItem(self, item: str):
         pass
 
-    def setAction(self, action: str):
+    def setAction(self, action: Constants.Action):
         text = ""
-        if action == Constants.Action.HEALING_VICTIM.value:
+        if action == Constants.Action.HEALING_VICTIM:
             text = "Healing victim..."
-        elif action == Constants.Action.CARRYING_VICTIM.value:
+        elif action == Constants.Action.CARRYING_VICTIM:
             text = "Carrying victim..."
-        elif action == Constants.Action.DESTROYING_RUBBLE.value:
+        elif action == Constants.Action.DESTROYING_RUBBLE:
             text = "Destroying rubble..."
 
         self._actionLabel.setText(text)

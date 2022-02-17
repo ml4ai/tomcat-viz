@@ -263,6 +263,7 @@ class MainWindow(QMainWindow):
     def _updateHeaderInfo(self, timeStep: int):
         self._timerLabel.setText(secondsToTime(timeStep))
         self._scoreLabel.setText(f"{self._trial.scores[timeStep]}")
+        self._perturbationCheckbox.setChecked(self._trial.activeBlackout[timeStep])
         self._updateActions(timeStep)
 
     def _updateActions(self, timeStep: int):
