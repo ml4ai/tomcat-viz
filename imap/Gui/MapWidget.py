@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen, QGraphicsItem
 
 from imap.Common.Format import secondsToTime
+from imap.Common.Constants import Constants
 from imap.Gui.CustomScene import CustomScene
 from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial, Position
@@ -72,6 +73,9 @@ class MapWidget(QWidget):
 
         # Rubble item drawn in a given position
         self._rubbleItems: Dict[Position, QGraphicsItem] = {}
+
+        # Victim item drawn in a given position
+        self._victimItems: Dict[Position, QGraphicsItem] = {}
 
     def loadMap(self, mapObject: Map):
         self._map = mapObject
@@ -140,10 +144,13 @@ class MapWidget(QWidget):
                     self._rubbleItems[position] = item
             elif row[1] == "block_victim_1":
                 item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
+                self._victimItems[position] = item
             elif row[1] == "block_victim_1b":
                 item = self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
+                self._victimItems[position] = item
             elif row[1] == "block_victim_proximity":
                 item = self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
+                self._victimItems[position] = item
             elif row[1] == "block_rubble_collapse":
                 item = self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
 
@@ -268,6 +275,7 @@ class MapWidget(QWidget):
 
                 self._drawMarkers(timeStep)
                 self._drawRubble(timeStep)
+                self._drawVictims(timeStep)
 
             else:
                 for item in self._addedBlockItems[timeStep]:
@@ -331,3 +339,32 @@ class MapWidget(QWidget):
                     item = self._scene.drawGravel(position.x, position.y, self._blockSize, self._blockSize)
                     self._rubbleItems[position] = item
                     self._addedBlockItems[timeStep].append(item)
+
+    def _drawVictims(self, timeStep: int):
+        self._drawSavedVictims(timeStep)
+
+    def _drawSavedVictims(self, timeStep: int):
+        for victim in self._trial.savedVictims[timeStep]:
+            if victim.position in self._victimItems:
+                # Remove current victim block
+                item = self._victimItems[victim.position]
+                self._scene.removeItem(item)
+                self._removedBlockItems[timeStep].append(item)
+
+                # Create a safe victim block in the same position.
+                item = None
+                if victim.victimType == Constants.VictimType.A:
+                    item = self._scene.drawSafeVictimA(victim.position.x, victim.position.y, self._blockSize,
+                                                       self._blockSize)
+                elif victim.victimType == Constants.VictimType.B:
+                    item = self._scene.drawSafeVictimB(victim.position.x, victim.position.y, self._blockSize,
+                                                       self._blockSize)
+                elif victim.victimType == Constants.VictimType.CRITICAL:
+                    item = self._scene.drawSafeVictimCritical(victim.position.x, victim.position.y, self._blockSize,
+                                                              self._blockSize)
+                if item is not None:
+                    self._victimItems[victim.position] = item
+                    self._addedBlockItems[timeStep].append(item)
+            else:
+                print(
+                    f"[{secondsToTime(timeStep)}]: Victim {victim.victimType} at {victim.position} not found.")

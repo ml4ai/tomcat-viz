@@ -46,6 +46,14 @@ class CustomScene(QGraphicsScene):
         color = QColor(Constants.Colors.SAFE_VICTIM.value)
         return self._drawStampedBlock("A", x, y, scale, blockSize, color, color, Qt.black)
 
+    def drawSafeVictimB(self, x: float, y: float, scale: float, blockSize: float):
+        color = QColor(Constants.Colors.SAFE_VICTIM.value)
+        return self._drawStampedBlock("B", x, y, scale, blockSize, color, color, Qt.black)
+
+    def drawSafeVictimCritical(self, x: float, y: float, scale: float, blockSize: float):
+        color = QColor(Constants.Colors.SAFE_VICTIM.value)
+        return self._drawStampedBlock("C", x, y, scale, blockSize, color, color, Qt.black)
+
     def drawRubbleCollapseBlock(self, x: float, y: float, scale: float, blockSize: float):
         color = QColor(Constants.Colors.THREAT_ACTIVATION.value)
         return self._drawBlock(x, y, scale, blockSize, color, color)

@@ -54,3 +54,12 @@ class Constants:
         CRITICAL_VICTIM = 4
         THREAT_ROOM = 5
         SOS = 6
+
+    # Victims
+    class VictimType(Enum):
+        A = 0
+        B = 1
+        CRITICAL = 2
+        SAFE_A = 3
+        SAFE_B = 4
+        SAFE_CRITICAL = 5

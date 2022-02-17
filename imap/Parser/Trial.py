@@ -86,6 +86,24 @@ class Marker:
         return f"{self.markerType}#{self.position}"
 
 
+class Victim:
+    def __init__(self, victimType: Constants.VictimType, x: float, y: float):
+        super().__init__()
+        self.victimType = victimType
+        self.position = Position(x, y)
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+                getattr(other, 'victimType', None) == self.victimType and
+                getattr(other, 'position', None) == self.position)
+
+    def __hash__(self):
+        return hash(f"{self.victimType}#{self.position}")
+
+    def __repr__(self):
+        return f"{self.victimType}#{self.position}"
+
+
 class Trial:
     USED_TOPICS = [
         "trial",
@@ -119,6 +137,7 @@ class Trial:
         self.rubbleCounts: List[Dict[Position, int]] = []
 
         self.activeBlackout: List[bool] = []
+        self.savedVictims: List[Set[Victim]] = []
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
@@ -138,7 +157,8 @@ class Trial:
             "chat_messages": self.chatMessages,
             "players_actions": self.playersActions,
             "rubble_counts": self.rubbleCounts,
-            "active_blackout": self.activeBlackout
+            "active_blackout": self.activeBlackout,
+            "saved_victims": self.savedVictims
         }
 
         with open(filepath, "wb") as f:
@@ -157,6 +177,7 @@ class Trial:
         self.playersActions = trialPackage["players_actions"]
         self.rubbleCounts = trialPackage["rubble_counts"]
         self.activeBlackout = trialPackage["active_blackout"]
+        self.savedVictims = trialPackage["saved_victims"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -169,17 +190,19 @@ class Trial:
         playerIdToColor = {}
         self.metadata = {}
 
+        # Cleaning global variables
         self.scores = np.zeros(self._timeSteps, dtype=np.int32)
         self.placedMarkers = []
         self.removedMarkers = []
         self.rubbleCounts = []
-
         self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
-
         self.activeBlackout = []
+        self.savedVictims = []
 
+        # These variables contain valid values per time step.
+        # Some will have their value reset in the end of a time step.
         currentScore = 0
         currentPlayersPositions = [np.zeros(2) for _ in range(Constants.NUM_ROLES)]
         currentPlacedMarkers = set()
@@ -188,6 +211,7 @@ class Trial:
         currentPlayersActions = [Constants.Action.NONE for _ in range(Constants.NUM_ROLES)]
         currentRubbleCounts = {}
         currentActiveBlackout = False
+        currentSavedVictims = set()
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -296,6 +320,11 @@ class Trial:
                     else:
                         currentPlayersActions[
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
+                        if message["data"]["triage_state"].lower() == "successful":
+                            x = message["data"]["victim_x"] - self._map.metadata["min_x"]
+                            y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                            victimType = self._getVictimTypeFromStringType(message["data"]["type"])
+                            currentSavedVictims.add(Victim(victimType, x, y))
 
                 elif Trial._isMessageOf(message, "event", "Event:ToolUsed"):
                     tool = message["data"]["tool_type"].lower()
@@ -352,12 +381,14 @@ class Trial:
                                 currentPlayersActions[playerIdx] = Constants.Action.NONE
                             self.rubbleCounts.append(currentRubbleCounts.copy())
                             self.activeBlackout.append(currentActiveBlackout)
+                            self.savedVictims.append(currentSavedVictims.copy())
 
                         nextTimeStep = elapsedSeconds + 1
 
                         currentPlacedMarkers.clear()
                         currentRemovedMarkers.clear()
                         currentRubbleCounts.clear()
+                        currentSavedVictims.clear()
 
                     if nextTimeStep == self._timeSteps:
                         break
@@ -415,6 +446,18 @@ class Trial:
             markerType = Constants.MarkerType.SOS
 
         return markerType
+
+    @staticmethod
+    def _getVictimTypeFromStringType(stringType: str) -> Constants.VictimType:
+        victimType = None
+        if "victim_a" in stringType:
+            victimType = Constants.VictimType.A
+        elif "victim_b" in stringType:
+            victimType = Constants.VictimType.B
+        elif "victim_c" in stringType:
+            victimType = Constants.VictimType.CRITICAL
+
+        return victimType
 
 # if __name__ == "__main__":
 #     parser = Trial(
