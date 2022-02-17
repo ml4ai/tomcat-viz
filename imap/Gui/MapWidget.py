@@ -278,18 +278,18 @@ class MapWidget(QWidget):
                 self._drawVictims(timeStep)
 
             else:
-                for item in self._addedBlockItems[timeStep]:
-                    self._scene.addItem(item)
-
                 for item in self._removedBlockItems[timeStep]:
                     self._scene.removeItem(item)
+
+                for item in self._addedBlockItems[timeStep]:
+                    self._scene.addItem(item)
         else:
             # Reverse the action of the next time step
-            for item in self._addedBlockItems[timeStep + 1]:
-                self._scene.removeItem(item)
-
             for item in self._removedBlockItems[timeStep + 1]:
                 self._scene.addItem(item)
+
+            for item in self._addedBlockItems[timeStep + 1]:
+                self._scene.removeItem(item)
 
     def _drawMarkers(self, timeStep: int):
         self._eraseDestroyedMarkers(timeStep)
@@ -342,6 +342,8 @@ class MapWidget(QWidget):
 
     def _drawVictims(self, timeStep: int):
         self._drawSavedVictims(timeStep)
+        self._drawPickedUpVictims(timeStep)
+        self._drawPlacedVictims(timeStep)
 
     def _drawSavedVictims(self, timeStep: int):
         for victim in self._trial.savedVictims[timeStep]:
@@ -350,6 +352,7 @@ class MapWidget(QWidget):
                 item = self._victimItems[victim.position]
                 self._scene.removeItem(item)
                 self._removedBlockItems[timeStep].append(item)
+                del self._victimItems[victim.position]
 
                 # Create a safe victim block in the same position.
                 item = None
@@ -360,11 +363,50 @@ class MapWidget(QWidget):
                     item = self._scene.drawSafeVictimB(victim.position.x, victim.position.y, self._blockSize,
                                                        self._blockSize)
                 elif victim.victimType == Constants.VictimType.CRITICAL:
-                    item = self._scene.drawSafeVictimCritical(victim.position.x, victim.position.y, self._blockSize,
+                    item = self._scene.drawSafeCriticalVictim(victim.position.x, victim.position.y, self._blockSize,
                                                               self._blockSize)
                 if item is not None:
                     self._victimItems[victim.position] = item
                     self._addedBlockItems[timeStep].append(item)
             else:
                 print(
-                    f"[{secondsToTime(timeStep)}]: Victim {victim.victimType} at {victim.position} not found.")
+                    f"[{secondsToTime(timeStep)}]: Rescuing victim {victim.victimType} at {victim.position} not found.")
+                self._scene.drawRed(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+
+    def _drawPickedUpVictims(self, timeStep: int):
+        for victim in self._trial.pickedUpVictims[timeStep]:
+            if victim.position in self._victimItems:
+                # Remove current victim block
+                item = self._victimItems[victim.position]
+                self._scene.removeItem(item)
+                self._removedBlockItems[timeStep].append(item)
+                del self._victimItems[victim.position]
+            else:
+                print(
+                    f"[{secondsToTime(timeStep)}]: Picking up victim {victim.victimType} at {victim.position} not found.")
+                self._scene.drawGreen(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+
+    def _drawPlacedVictims(self, timeStep: int):
+        for victim in self._trial.placedVictims[timeStep]:
+            item = None
+            if victim.victimType == Constants.VictimType.A:
+                item = self._scene.drawVictimA(victim.position.x, victim.position.y, self._blockSize,
+                                               self._blockSize)
+            elif victim.victimType == Constants.VictimType.B:
+                item = self._scene.drawVictimB(victim.position.x, victim.position.y, self._blockSize,
+                                               self._blockSize)
+            elif victim.victimType == Constants.VictimType.CRITICAL:
+                item = self._scene.drawCriticalVictim(victim.position.x, victim.position.y, self._blockSize,
+                                                      self._blockSize)
+            if victim.victimType == Constants.VictimType.SAFE_A:
+                item = self._scene.drawSafeVictimA(victim.position.x, victim.position.y, self._blockSize,
+                                                   self._blockSize)
+            elif victim.victimType == Constants.VictimType.SAFE_B:
+                item = self._scene.drawSafeVictimB(victim.position.x, victim.position.y, self._blockSize,
+                                                   self._blockSize)
+            elif victim.victimType == Constants.VictimType.SAFE_CRITICAL:
+                item = self._scene.drawSafeCriticalVictim(victim.position.x, victim.position.y, self._blockSize,
+                                                          self._blockSize)
+            if item is not None:
+                self._victimItems[victim.position] = item
+                self._addedBlockItems[timeStep].append(item)

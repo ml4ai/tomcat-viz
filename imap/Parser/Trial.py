@@ -138,6 +138,8 @@ class Trial:
 
         self.activeBlackout: List[bool] = []
         self.savedVictims: List[Set[Victim]] = []
+        self.pickedUpVictims: List[Set[Victim]] = []
+        self.placedVictims: List[Set[Victim]] = []
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
@@ -158,7 +160,9 @@ class Trial:
             "players_actions": self.playersActions,
             "rubble_counts": self.rubbleCounts,
             "active_blackout": self.activeBlackout,
-            "saved_victims": self.savedVictims
+            "saved_victims": self.savedVictims,
+            "picked_up_victims": self.pickedUpVictims,
+            "placed_victims": self.placedVictims
         }
 
         with open(filepath, "wb") as f:
@@ -178,6 +182,8 @@ class Trial:
         self.rubbleCounts = trialPackage["rubble_counts"]
         self.activeBlackout = trialPackage["active_blackout"]
         self.savedVictims = trialPackage["saved_victims"]
+        self.pickedUpVictims = trialPackage["picked_up_victims"]
+        self.placedVictims = trialPackage["placed_victims"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -212,6 +218,8 @@ class Trial:
         currentRubbleCounts = {}
         currentActiveBlackout = False
         currentSavedVictims = set()
+        currentPickedUpVictims = set()
+        currentPlacedVictims = set()
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -304,11 +312,34 @@ class Trial:
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM
 
+                    x = message["data"]["victim_x"] - self._map.metadata["min_x"]
+                    y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                    victimType = self._getVictimTypeFromStringType(message["data"]["type"])
+                    victim = Victim(victimType, x, y)
+
+                    if victim in currentPlacedVictims:
+                        # Victim was picked up again before the within a time step. Just remove it from the list of
+                        # victims that were placed
+                        currentPlacedVictims.remove(victim)
+                    else:
+                        currentPickedUpVictims.add(victim)
+
                 elif Trial._isMessageOf(message, "event", "Event:VictimPlaced"):
                     playerId = message["data"]["participant_id"]
                     playerColor = playerIdToColor[playerId]
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
+
+                    x = message["data"]["victim_x"] - self._map.metadata["min_x"]
+                    y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                    victimType = self._getVictimTypeFromStringType(message["data"]["type"])
+                    victim = Victim(victimType, x, y)
+
+                    if victim in currentPickedUpVictims:
+                        # Victim was picked up and placed immediately in the same location, just never pick it up.
+                        currentPickedUpVictims.remove(victim)
+                    else:
+                        currentPlacedVictims.add(victim)
 
                 elif Trial._isMessageOf(message, "event", "Event:Triage"):
                     playerId = message["data"]["participant_id"]
@@ -382,6 +413,8 @@ class Trial:
                             self.rubbleCounts.append(currentRubbleCounts.copy())
                             self.activeBlackout.append(currentActiveBlackout)
                             self.savedVictims.append(currentSavedVictims.copy())
+                            self.pickedUpVictims.append(currentPickedUpVictims.copy())
+                            self.placedVictims.append(currentPlacedVictims.copy())
 
                         nextTimeStep = elapsedSeconds + 1
 
@@ -389,6 +422,8 @@ class Trial:
                         currentRemovedMarkers.clear()
                         currentRubbleCounts.clear()
                         currentSavedVictims.clear()
+                        currentPickedUpVictims.clear()
+                        currentPlacedVictims.clear()
 
                     if nextTimeStep == self._timeSteps:
                         break
@@ -456,6 +491,12 @@ class Trial:
             victimType = Constants.VictimType.B
         elif "victim_c" in stringType:
             victimType = Constants.VictimType.CRITICAL
+        if "victim_saved_a" in stringType:
+            victimType = Constants.VictimType.SAFE_A
+        elif "victim_saved_b" in stringType:
+            victimType = Constants.VictimType.SAFE_B
+        elif "victim_saved_c" in stringType:
+            victimType = Constants.VictimType.SAFE_CRITICAL
 
         return victimType
 

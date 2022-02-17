@@ -50,7 +50,7 @@ class CustomScene(QGraphicsScene):
         color = QColor(Constants.Colors.SAFE_VICTIM.value)
         return self._drawStampedBlock("B", x, y, scale, blockSize, color, color, Qt.black)
 
-    def drawSafeVictimCritical(self, x: float, y: float, scale: float, blockSize: float):
+    def drawSafeCriticalVictim(self, x: float, y: float, scale: float, blockSize: float):
         color = QColor(Constants.Colors.SAFE_VICTIM.value)
         return self._drawStampedBlock("C", x, y, scale, blockSize, color, color, Qt.black)
 

@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
         self._timeSlider.setEnabled(False)
         self._timeSlider.setRange(0, 899)
         self._timeSlider.setSingleStep(1)
+        self._timeSlider.setTracking(True)
         self._timeSlider.valueChanged.connect(self._updateTimerAction)
         self._rewindButton = QPushButton("-")
         self._rewindButton.setEnabled(False)
@@ -194,7 +195,6 @@ class MainWindow(QMainWindow):
             self._rewindButton.setEnabled(False)
         else:
             self._rewindButton.setEnabled(True)
-
 
         self._updateHeaderInfo(value)
 
