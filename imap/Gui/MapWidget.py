@@ -130,13 +130,14 @@ class MapWidget(QWidget):
             if row[1] == "block_signal_victim":
                 item = self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
             elif row[1] == "gravel":
-                item = self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
-
-                # Update number of rubbles per position
-                if position in self._rubbleCounts:
+                if position in self._rubbleItems:
+                    # If rubble is comprised of blocks stacked on top of each other, we only draw one and keep a counter
+                    # to know how many more there are in the stack per position
                     self._rubbleCounts[position] += 1
                 else:
+                    item = self._scene.drawGravel(x, y, self._blockSize, self._blockSize)
                     self._rubbleCounts[position] = 1
+                    self._rubbleItems[position] = item
             elif row[1] == "block_victim_1":
                 item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
             elif row[1] == "block_victim_1b":
