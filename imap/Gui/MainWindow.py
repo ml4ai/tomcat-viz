@@ -13,6 +13,7 @@ from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial
 from imap.Parser.Estimates import Estimates
 from imap.Gui.HeaderWidget import HeaderWidget
+from imap.Gui.TimeSliderWidget import TimeSliderWidget
 
 import json
 import numpy as np
@@ -43,25 +44,12 @@ class MainWindow(QMainWindow):
     def _createWidgets(self):
         self._headerPanel = HeaderWidget()
 
-        # Map
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
         mapHeight = int(self.height() * MainWindow.MAP_HEIGHT_PROP / 100)
         self._mapWidget = MapWidget(mapWidth, mapHeight)
 
-        # Timer
-        self._timerLabel = createLabel("00:00", Constants.Font.SMALL_REGULAR.value, alignment=Qt.AlignCenter)
-        self._timeSlider = QSlider(Qt.Horizontal)
+        self._timeSlider = TimeSliderWidget(self._onTimeStepChange)
         self._timeSlider.setEnabled(False)
-        self._timeSlider.setRange(0, 899)
-        self._timeSlider.setSingleStep(1)
-        self._timeSlider.setTracking(True)
-        self._timeSlider.valueChanged.connect(self._updateTimerAction)
-        self._rewindButton = QPushButton("-")
-        self._rewindButton.setEnabled(False)
-        self._forwardButton = QPushButton("+")
-        self._forwardButton.setEnabled(False)
-        self._rewindButton.clicked.connect(self._rewindTimer)
-        self._forwardButton.clicked.connect(self._forwardTimer)
 
         self._chatWidget = SpeechWidget()
         self._estimatesWidget = EstimatesWidget()
@@ -72,7 +60,7 @@ class MainWindow(QMainWindow):
         leftPanelLayout = QVBoxLayout()
         leftPanelLayout.addWidget(self._headerPanel, 15)
         leftPanelLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
-        self._createSliderPanel(leftPanelLayout)
+        leftPanelLayout.addWidget(self._timeSlider, 5)
 
         rightPanelLayout = QVBoxLayout()
         rightPanelLayout.addWidget(self._chatWidget, 50)
@@ -83,14 +71,6 @@ class MainWindow(QMainWindow):
 
         mainLayout.addLayout(leftPanelLayout, MainWindow.LEFT_PANEL_PROP)
         mainLayout.addLayout(rightPanelLayout, 100 - MainWindow.LEFT_PANEL_PROP)
-
-    def _createSliderPanel(self, parentLayout: QLayout):
-        layout = QHBoxLayout()
-        layout.addWidget(self._rewindButton)
-        layout.addWidget(self._forwardButton)
-        layout.addWidget(self._timeSlider, 95)
-        layout.addWidget(self._timerLabel, 5)
-        parentLayout.addLayout(layout, 5)
 
     def _createMenu(self):
         self._createTrialMenu()
@@ -128,25 +108,11 @@ class MainWindow(QMainWindow):
         menuBar.addMenu(trialMenu)
 
     # Actions
-    def _updateTimerAction(self, value):
-        if value == 0:
-            self._rewindButton.setEnabled(False)
-        else:
-            self._rewindButton.setEnabled(True)
-
-        self._updateHeaderPanel(value)
-        self._timerLabel.setText(secondsToTime(value))
-        self._mapWidget.updateFor(value)
-        self._chatWidget.updateFor(value)
-        self._estimatesWidget.updateFor(value)
-
-    def _rewindTimer(self):
-        newSliderValue = self._timeSlider.value() - 1
-        self._timeSlider.setValue(newSliderValue)
-
-    def _forwardTimer(self):
-        newSliderValue = self._timeSlider.value() + 1
-        self._timeSlider.setValue(newSliderValue)
+    def _onTimeStepChange(self, newTimeStep: int):
+        self._updateHeaderInfo(newTimeStep)
+        self._mapWidget.updateFor(newTimeStep)
+        self._chatWidget.updateFor(newTimeStep)
+        self._estimatesWidget.updateFor(newTimeStep)
 
     def _loadTrialFromMetadataAction(self, value):
         filepath = QFileDialog.getOpenFileName(self, "Select Metadata File", ".", "Metadata File (*.metadata)")[0]
@@ -169,9 +135,10 @@ class MainWindow(QMainWindow):
             self._trial.save(filepath)
 
     def _initializeTrial(self):
-        self._timeSlider.setValue(0)
+        self._timeSlider.setTimeSteps(self._trial.timeSteps)
+        self._timeSlider.reset()
         self._timeSlider.setEnabled(True)
-        self._forwardButton.setEnabled(True)
+
         self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
         self._chatWidget.loadTrial(self._trial)
@@ -197,7 +164,7 @@ class MainWindow(QMainWindow):
         if filepath != "":
             self._estimatesWidget.loadEstimates(Estimates(filepath))
 
-    def _updateHeaderPanel(self, timeStep: int):
+    def _updateHeaderInfo(self, timeStep: int):
         self._headerPanel.setScore(self._trial.scores[timeStep])
         if self._trial.activeBlackout[timeStep]:
             self._headerPanel.showBlackout()

@@ -124,8 +124,8 @@ class Trial:
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
-        self._map = mapObject
-        self._timeSteps = timeSteps
+        self.map = mapObject
+        self.timeSteps = timeSteps
 
         self.metadata = {}
         self.scores = np.array([])
@@ -197,11 +197,11 @@ class Trial:
         self.metadata = {}
 
         # Cleaning global variables
-        self.scores = np.zeros(self._timeSteps, dtype=np.int32)
+        self.scores = np.zeros(self.timeSteps, dtype=np.int32)
         self.placedMarkers = []
         self.removedMarkers = []
         self.rubbleCounts = []
-        self.playersPositions = [np.zeros((self._timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
+        self.playersPositions = [np.zeros((self.timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
         self.activeBlackout = []
@@ -272,8 +272,8 @@ class Trial:
                 elif Trial._isMessageOf(message, "event", "Event:MarkerPlaced"):
                     # We don't care about who placed it for the moment
                     markerType = Trial._getMarkerTypeFromStringType(message["data"]["type"])
-                    x = message["data"]["marker_x"] - self._map.metadata["min_x"]
-                    y = message["data"]["marker_z"] - self._map.metadata["min_y"]
+                    x = message["data"]["marker_x"] - self.map.metadata["min_x"]
+                    y = message["data"]["marker_z"] - self.map.metadata["min_y"]
 
                     marker = Marker(markerType, x, y)
                     if marker in currentRemovedMarkers:
@@ -286,8 +286,8 @@ class Trial:
 
                 elif Trial._isMessageOf(message, "event", "Event:MarkerRemoved"):
                     markerType = Trial._getMarkerTypeFromStringType(message["data"]["type"])
-                    x = message["data"]["marker_x"] - self._map.metadata["min_x"]
-                    y = message["data"]["marker_z"] - self._map.metadata["min_y"]
+                    x = message["data"]["marker_x"] - self.map.metadata["min_x"]
+                    y = message["data"]["marker_z"] - self.map.metadata["min_y"]
 
                     marker = Marker(markerType, x, y)
                     if marker in currentPlacedMarkers:
@@ -312,8 +312,8 @@ class Trial:
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.CARRYING_VICTIM
 
-                    x = message["data"]["victim_x"] - self._map.metadata["min_x"]
-                    y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                    x = message["data"]["victim_x"] - self.map.metadata["min_x"]
+                    y = message["data"]["victim_z"] - self.map.metadata["min_y"]
                     victimType = self._getVictimTypeFromStringType(message["data"]["type"])
                     victim = Victim(victimType, x, y)
 
@@ -330,8 +330,8 @@ class Trial:
                     currentPlayersActions[
                         Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
 
-                    x = message["data"]["victim_x"] - self._map.metadata["min_x"]
-                    y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                    x = message["data"]["victim_x"] - self.map.metadata["min_x"]
+                    y = message["data"]["victim_z"] - self.map.metadata["min_y"]
                     victimType = self._getVictimTypeFromStringType(message["data"]["type"])
                     victim = Victim(victimType, x, y)
 
@@ -352,8 +352,8 @@ class Trial:
                         currentPlayersActions[
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.NONE
                         if message["data"]["triage_state"].lower() == "successful":
-                            x = message["data"]["victim_x"] - self._map.metadata["min_x"]
-                            y = message["data"]["victim_z"] - self._map.metadata["min_y"]
+                            x = message["data"]["victim_x"] - self.map.metadata["min_x"]
+                            y = message["data"]["victim_z"] - self.map.metadata["min_y"]
                             victimType = self._getVictimTypeFromStringType(message["data"]["type"])
                             currentSavedVictims.add(Victim(victimType, x, y))
 
@@ -367,8 +367,8 @@ class Trial:
                             Constants.PLAYER_COLOR_MAP[playerColor].value] = Constants.Action.DESTROYING_RUBBLE
 
                 elif Trial._isMessageOf(message, "event", "Event:RubbleDestroyed"):
-                    x = message["data"]["rubble_x"] - self._map.metadata["min_x"]
-                    y = message["data"]["rubble_z"] - self._map.metadata["min_y"]
+                    x = message["data"]["rubble_x"] - self.map.metadata["min_x"]
+                    y = message["data"]["rubble_z"] - self.map.metadata["min_y"]
                     position = Position(x, y)
 
                     if position in currentRubbleCounts:
@@ -386,7 +386,7 @@ class Trial:
 
                     for x in range(message["data"]["fromBlock_x"], message["data"]["toBlock_x"] + 1):
                         for y in range(message["data"]["fromBlock_z"], message["data"]["toBlock_z"] + 1):
-                            position = Position(x - self._map.metadata["min_x"], y - self._map.metadata["min_y"])
+                            position = Position(x - self.map.metadata["min_x"], y - self.map.metadata["min_y"])
                             if position in currentRubbleCounts:
                                 currentRubbleCounts[position] += counts
                             else:
@@ -427,14 +427,14 @@ class Trial:
                         currentPickedUpVictims.clear()
                         currentPlacedVictims.clear()
 
-                    if nextTimeStep == self._timeSteps:
+                    if nextTimeStep == self.timeSteps:
                         break
 
     def _missionTimerToElapsedSeconds(self, timer: str):
         if timer.find(":") >= 0:
             minutes = int(timer[:timer.find(":")])
             seconds = int(timer[timer.find(":") + 1:])
-            return self._timeSteps - (seconds + minutes * 60)
+            return self.timeSteps - (seconds + minutes * 60)
 
         return -1
 
