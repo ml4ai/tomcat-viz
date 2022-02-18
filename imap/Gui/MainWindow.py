@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton
+from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton, QSplitter
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
 
 from imap.Gui.Utils import createLabel
-from imap.Gui.SpeechWidget import SpeechWidget
+from imap.Gui.TextMessageWidget import TextMessageWidget
 from imap.Gui.EstimatesWidget import EstimatesWidget
 from imap.Common.Format import secondsToTime
 from imap.Common.Constants import Constants
@@ -51,7 +51,11 @@ class MainWindow(QMainWindow):
         self._timeSlider = TimeSliderWidget(self._onTimeStepChange)
         self._timeSlider.setEnabled(False)
 
-        self._chatWidget = SpeechWidget()
+        self._chatHeaderLabel = createLabel("Chat Messages", Constants.Font.SMALL_BOLD.value, Qt.AlignLeft)
+        self._chatWidget = TextMessageWidget()
+
+        self._estimatesHeaderLabel = createLabel("Probability Estimates", Constants.Font.SMALL_BOLD.value, "black",
+                                                 Qt.AlignLeft)
         self._estimatesWidget = EstimatesWidget()
 
     def _configureLayout(self):
@@ -62,15 +66,29 @@ class MainWindow(QMainWindow):
         leftPanelLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
         leftPanelLayout.addWidget(self._timeSlider, 5)
 
-        rightPanelLayout = QVBoxLayout()
-        rightPanelLayout.addWidget(self._chatWidget, 50)
+        chatLayout = QVBoxLayout()
+        chatLayout.setContentsMargins(0, 0, 0, 10)
+        chatLayout.addWidget(self._chatHeaderLabel)
+        chatLayout.addWidget(self._chatWidget)
+        chatPanelWidget = QWidget()
+        chatPanelWidget.setLayout(chatLayout)
+
         scrollArea = QScrollArea()
         scrollArea.setWidget(self._estimatesWidget)
         scrollArea.setWidgetResizable(True)
-        rightPanelLayout.addWidget(scrollArea, 50)
+        estimatesLayout = QVBoxLayout()
+        estimatesLayout.setContentsMargins(0, 0, 0, 0)
+        estimatesLayout.addWidget(self._estimatesHeaderLabel)
+        estimatesLayout.addWidget(scrollArea)
+        estimatesPanelWidget = QWidget()
+        estimatesPanelWidget.setLayout(estimatesLayout)
+
+        rightPanelSplitter = QSplitter(Qt.Vertical)
+        rightPanelSplitter.addWidget(chatPanelWidget)
+        rightPanelSplitter.addWidget(estimatesPanelWidget)
 
         mainLayout.addLayout(leftPanelLayout, MainWindow.LEFT_PANEL_PROP)
-        mainLayout.addLayout(rightPanelLayout, 100 - MainWindow.LEFT_PANEL_PROP)
+        mainLayout.addWidget(rightPanelSplitter, 100 - MainWindow.LEFT_PANEL_PROP)
 
     def _createMenu(self):
         self._createTrialMenu()

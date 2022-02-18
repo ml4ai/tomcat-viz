@@ -6,7 +6,7 @@ from imap.Parser.Trial import Trial, ChatMessage
 from imap.Common.Constants import Constants
 
 
-class SpeechWidget(QTextEdit):
+class TextMessageWidget(QTextEdit):
 
     def __init__(self):
         super().__init__()
