@@ -31,8 +31,8 @@ class Constants:
         CRITICAL_VICTIM = "#FACC09"
         SAFE_VICTIM = "#0AB7FC"
         THREAT_ACTIVATION = "#8400EB"
-        RUBBLE = "#E30B21"
-        MARKER = "#E602D5"
+        RUBBLE = "#808080"
+        MARKER = "#DE87F0"
         INCONSISTENCY = "#FA8B03"
 
     # TODO - remove?

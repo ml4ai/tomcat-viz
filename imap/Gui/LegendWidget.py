@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout
 from PyQt5.Qt import Qt, QSize
 
-from imap.Gui.Utils import createLabel, createEmptyWidget, createStampedBlockWidget
+from imap.Gui.Utils import createLabel, createEmptyWidget, createStampedBlockWidget, BlockIconWidget
 from imap.Common.Constants import Constants
 
 
@@ -75,10 +75,10 @@ class LegendWidget(QWidget):
                                            alignment=Qt.AlignLeft)
 
         # Misc
-        self._rubbleIcon = createStampedBlockWidget("V", Constants.Font.TINY_REGULAR.value, "black",
-                                                    "white", QSize(10, 10))
-        self._signalTriggerIcon = createStampedBlockWidget("V", Constants.Font.TINY_REGULAR.value, "black",
-                                                           "white", QSize(10, 10))
+        self._rubbleIcon = BlockIconWidget("white", Constants.Colors.RUBBLE.value, QSize(10, 10), Qt.Dense5Pattern,
+                                           Constants.Colors.RUBBLE.value)
+        self._signalTriggerIcon = BlockIconWidget("white", "black", QSize(10, 10), None, None, "V", "black",
+                                                  Constants.Font.TINY_REGULAR.value)
         self._rubbleCollapseTriggerIcon = createEmptyWidget(Constants.Colors.THREAT_ACTIVATION.value, QSize(10, 10))
         self._rubbleLabel = createLabel("Rubble", Constants.Font.TINY_REGULAR.value,
                                         alignment=Qt.AlignLeft)

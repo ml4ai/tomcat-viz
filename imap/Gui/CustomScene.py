@@ -28,7 +28,8 @@ class CustomScene(QGraphicsScene):
         return self._drawStampedBlock("V", x, y, scale, blockSize, Qt.white, Qt.black, Qt.black)
 
     def drawRubble(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawBlock(x, y, scale, blockSize, Qt.darkGray, Qt.darkGray, Qt.Dense5Pattern)
+        color = QColor(Constants.Colors.RUBBLE.value)
+        return self._drawBlock(x, y, scale, blockSize, color, color, Qt.Dense5Pattern)
 
     def drawVictimA(self, x: float, y: float, scale: float, blockSize: float):
         color = QColor(Constants.Colors.VICTIM_A.value)
