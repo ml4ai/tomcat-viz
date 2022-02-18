@@ -16,7 +16,7 @@ class PlayerPanelWidget(QWidget):
     def setName(self, name: str):
         self._nameLabel.setText(name)
 
-    def setEquippedItem(self, item: str):
+    def setEquippedItem(self, item: Constants.EquippedItem):
         pass
 
     def setAction(self, action: Constants.Action):

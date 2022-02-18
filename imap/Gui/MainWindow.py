@@ -12,7 +12,7 @@ from imap.Gui.MapWidget import MapWidget
 from imap.Parser.Map import Map
 from imap.Parser.Trial import Trial
 from imap.Parser.Estimates import Estimates
-from imap.Gui.PlayerPanelWidget import PlayerPanelWidget
+from imap.Gui.HeaderWidget import HeaderWidget
 
 import json
 import numpy as np
@@ -32,32 +32,16 @@ class MainWindow(QMainWindow):
         self._centralWidget = QWidget(self)
         self.setCentralWidget(self._centralWidget)
 
-        self._boldLabelFont = QFont("Arial", 14, QFont.Bold)
-        self._regularLabelFont = QFont("Arial", 14)
-
         self._createWidgets()
         self._configureLayout()
         self._createMenu()
 
-        self._scores = np.array([])
         self._loadDefaultMap()
 
         self._trial = None
 
     def _createWidgets(self):
-        # Trial Info
-        self._trialLabel = createLabel("", self._regularLabelFont)
-        self._teamLabel = createLabel("", self._regularLabelFont)
-
-        # Game Info
-        self._scoreLabel = createLabel("0", self._regularLabelFont)
-        self._perturbationCheckbox = QCheckBox()
-        self._perturbationCheckbox.setEnabled(False)
-
-        # Player Info
-        self._redPanel = PlayerPanelWidget(Constants.Colors.RED_PLAYER.value)
-        self._greenPanel = PlayerPanelWidget(Constants.Colors.GREEN_PLAYER.value)
-        self._bluePanel = PlayerPanelWidget(Constants.Colors.BLUE_PLAYER.value)
+        self._headerPanel = HeaderWidget()
 
         # Map
         mapWidth = int(self.width() * MainWindow.LEFT_PANEL_PROP / 100)
@@ -65,7 +49,7 @@ class MainWindow(QMainWindow):
         self._mapWidget = MapWidget(mapWidth, mapHeight)
 
         # Timer
-        self._timerLabel = createLabel("00:00", self._regularLabelFont, alignment=Qt.AlignCenter)
+        self._timerLabel = createLabel("00:00", Constants.Font.SMALL_REGULAR.value, alignment=Qt.AlignCenter)
         self._timeSlider = QSlider(Qt.Horizontal)
         self._timeSlider.setEnabled(False)
         self._timeSlider.setRange(0, 899)
@@ -83,68 +67,22 @@ class MainWindow(QMainWindow):
         self._estimatesWidget = EstimatesWidget()
 
     def _configureLayout(self):
-        sidePanelLayout = QHBoxLayout()
+        mainLayout = QHBoxLayout(self._centralWidget)
 
         leftPanelLayout = QVBoxLayout()
-        rightPanelLayout = QVBoxLayout()
-
-        sidePanelLayout.addLayout(leftPanelLayout, MainWindow.LEFT_PANEL_PROP)
-        sidePanelLayout.addLayout(rightPanelLayout, 100 - MainWindow.LEFT_PANEL_PROP)
-
-        # Widgets on the left side of the window
-        self._createTrialInfoPanel(leftPanelLayout)
-        self._createGameInfoPanel(leftPanelLayout)
-        self._createMapPanel(leftPanelLayout)
+        leftPanelLayout.addWidget(self._headerPanel, 15)
+        leftPanelLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
         self._createSliderPanel(leftPanelLayout)
 
-        # Widgets on the right side of the window
+        rightPanelLayout = QVBoxLayout()
         rightPanelLayout.addWidget(self._chatWidget, 50)
         scrollArea = QScrollArea()
         scrollArea.setWidget(self._estimatesWidget)
         scrollArea.setWidgetResizable(True)
         rightPanelLayout.addWidget(scrollArea, 50)
 
-        self._centralWidget.setLayout(sidePanelLayout)
-
-    def _createTrialInfoPanel(self, parentLayout: QLayout):
-        layout = QFormLayout()
-        layout.setLabelAlignment(Qt.AlignLeft)
-        layout.setFormAlignment(Qt.AlignLeft)
-        layout.addRow(createLabel("Trial:", self._boldLabelFont), self._trialLabel)
-        layout.addRow(createLabel("Team:", self._boldLabelFont), self._teamLabel)
-        parentLayout.addLayout(layout, 3)
-
-    def _createGameInfoPanel(self, parentLayout: QLayout):
-        layout = QHBoxLayout()
-        centerInfoLayout = QVBoxLayout()
-
-        # Score and Perturbation
-        upper_info = QHBoxLayout()
-        upper_info.setAlignment(Qt.AlignCenter)
-        score_layout = QFormLayout()
-        score_layout.addRow(createLabel("Score:", self._boldLabelFont), self._scoreLabel)
-        perturbation_layout = QFormLayout()
-        perturbation_layout.addRow(createLabel("Perturbation:", self._boldLabelFont), self._perturbationCheckbox)
-        upper_info.addLayout(score_layout)
-        upper_info.addLayout(perturbation_layout)
-        centerInfoLayout.addLayout(upper_info)
-
-        # Player IDs
-        # self._createPlayerInfoPanel(centerInfoLayout)
-        bottom_info_layout = QHBoxLayout()
-        bottom_info_layout.addWidget(self._redPanel)
-        bottom_info_layout.addWidget(self._greenPanel)
-        bottom_info_layout.addWidget(self._bluePanel)
-        centerInfoLayout.addLayout(bottom_info_layout)
-
-        layout.addWidget(QWidget(), 20)
-        layout.addLayout(centerInfoLayout, 60)
-        layout.addWidget(QWidget(), 20)
-
-        parentLayout.addLayout(layout, 5)
-
-    def _createMapPanel(self, parentLayout: QLayout):
-        parentLayout.addWidget(self._mapWidget, MainWindow.MAP_HEIGHT_PROP)
+        mainLayout.addLayout(leftPanelLayout, MainWindow.LEFT_PANEL_PROP)
+        mainLayout.addLayout(rightPanelLayout, 100 - MainWindow.LEFT_PANEL_PROP)
 
     def _createSliderPanel(self, parentLayout: QLayout):
         layout = QHBoxLayout()
@@ -196,9 +134,8 @@ class MainWindow(QMainWindow):
         else:
             self._rewindButton.setEnabled(True)
 
-        self._updateHeaderInfo(value)
-
-        # Update custom widgets
+        self._updateHeaderPanel(value)
+        self._timerLabel.setText(secondsToTime(value))
         self._mapWidget.updateFor(value)
         self._chatWidget.updateFor(value)
         self._estimatesWidget.updateFor(value)
@@ -241,11 +178,11 @@ class MainWindow(QMainWindow):
         self._dumpAction.setEnabled(True)
 
     def _initializeHeaderInfo(self):
-        self._trialLabel.setText(self._trial.metadata["trial_number"])
-        self._teamLabel.setText(self._trial.metadata["team_number"])
-        self._redPanel.setName(self._trial.metadata["red_id"])
-        self._greenPanel.setName(self._trial.metadata["green_id"])
-        self._bluePanel.setName(self._trial.metadata["blue_id"])
+        self._headerPanel.setTrialNumber(self._trial.metadata["trial_number"])
+        self._headerPanel.setTeamNumber(self._trial.metadata["team_number"])
+        self._headerPanel.setRedPlayerName(self._trial.metadata["red_id"])
+        self._headerPanel.setGreenPlayerName(self._trial.metadata["green_id"])
+        self._headerPanel.setBluePlayerName(self._trial.metadata["blue_id"])
 
     def _loadDefaultMap(self):
         objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.1_3D_sm_v1.0.json")
@@ -260,17 +197,15 @@ class MainWindow(QMainWindow):
         if filepath != "":
             self._estimatesWidget.loadEstimates(Estimates(filepath))
 
-    def _updateHeaderInfo(self, timeStep: int):
-        self._timerLabel.setText(secondsToTime(timeStep))
-        self._scoreLabel.setText(f"{self._trial.scores[timeStep]}")
-        self._perturbationCheckbox.setChecked(self._trial.activeBlackout[timeStep])
-        self._updateActions(timeStep)
-
-    def _updateActions(self, timeStep: int):
-        panels = [self._redPanel, self._greenPanel, self._bluePanel]
-        for i, panel in enumerate(panels):
-            action = self._trial.playersActions[i][timeStep]
-            panel.setAction(action)
+    def _updateHeaderPanel(self, timeStep: int):
+        self._headerPanel.setScore(self._trial.scores[timeStep])
+        if self._trial.activeBlackout[timeStep]:
+            self._headerPanel.showBlackout()
+        else:
+            self._headerPanel.hideBlackout()
+        self._headerPanel.setRedPlayerAction(self._trial.playersActions[Constants.Player.RED.value][timeStep])
+        self._headerPanel.setGreenPlayerAction(self._trial.playersActions[Constants.Player.GREEN.value][timeStep])
+        self._headerPanel.setBluePlayerAction(self._trial.playersActions[Constants.Player.BLUE.value][timeStep])
 
     def createWidget(self, color: str):
         widget = QWidget()
