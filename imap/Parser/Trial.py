@@ -261,8 +261,8 @@ class Trial:
             elif Trial._isMessageOf(message, "observation", "State"):
                 playerId = message["data"]["participant_id"]
                 playerColor = playerIdToColor[playerId]
-                x = message["data"]["x"]
-                y = message["data"]["z"]
+                x = message["data"]["x"] - self.map.metadata["min_x"]
+                y = message["data"]["z"] - self.map.metadata["min_y"]
                 currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value] = np.array([x, y])
 
             if missionStarted:
