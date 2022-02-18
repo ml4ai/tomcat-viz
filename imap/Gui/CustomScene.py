@@ -69,22 +69,8 @@ class CustomScene(QGraphicsScene):
     def drawEmptyBlock(self, x: float, y: float, scale: float, blockSize: float):
         return self._drawBlock(x, y, scale, blockSize, Qt.white, Qt.white)
 
-    def drawMarker(self, type: Constants.MarkerType, x: float, y: float, scale: float, blockSize: float):
-        label = "X"
-        if type == Constants.MarkerType.NO_VICTIM:
-            label = "O"
-        elif type == Constants.MarkerType.VICTIM_A:
-            label = "A"
-        elif type == Constants.MarkerType.VICTIM_B:
-            label = "B"
-        elif type == Constants.MarkerType.REGULAR_VICTIM:
-            label = "R"
-        elif type == Constants.MarkerType.CRITICAL_VICTIM:
-            label = "C"
-        elif type == Constants.MarkerType.THREAT_ROOM:
-            label = "T"
-        elif type == Constants.MarkerType.SOS:
-            label = "S"
+    def drawMarker(self, markerType: Constants.MarkerType, x: float, y: float, scale: float, blockSize: float):
+        label = Constants.MARKER_TYPE_MAP.get(markerType, "X")
 
         color = QColor(Constants.Colors.MARKER.value)
         return self._drawStampedBlock(label, x, y, scale, blockSize, color, color, Qt.black)

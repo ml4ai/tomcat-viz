@@ -52,6 +52,7 @@ class Constants:
         CRITICAL_VICTIM = 4
         THREAT_ROOM = 5
         SOS = 6
+        RUBBLE = 7
 
     class VictimType(Enum):
         A = 0
@@ -62,7 +63,17 @@ class Constants:
         SAFE_CRITICAL = 5
 
     class EquippedItem(Enum):
-        NONE = 0
+        HAMMER = 0
+        MEDICAL_KIT = 1
+        STRETCHER = 2
+        NO_VICTIM = 3
+        VICTIM_A = 4
+        VICTIM_B = 5
+        REGULAR_VICTIM = 6
+        CRITICAL_VICTIM = 7
+        THREAT_ROOM = 8
+        SOS = 9
+        RUBBLE = 10
 
     class Font(Enum):
         TINY_REGULAR = QFont("Helvetica", 10)
@@ -70,6 +81,16 @@ class Constants:
         SMALL_REGULAR = QFont("Helvetica", 14)
         LARGE_BOLD = QFont("Helvetica", 40)
 
+    MARKER_TYPE_MAP = {
+        MarkerType.NO_VICTIM: "O",
+        MarkerType.VICTIM_A: "A",
+        MarkerType.VICTIM_B: "B",
+        MarkerType.REGULAR_VICTIM: "V",
+        MarkerType.CRITICAL_VICTIM: "C",
+        MarkerType.THREAT_ROOM: "T",
+        MarkerType.SOS: "S",
+        MarkerType.RUBBLE: "R",
+    }
 
 
 

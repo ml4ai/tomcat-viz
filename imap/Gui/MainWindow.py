@@ -192,6 +192,12 @@ class MainWindow(QMainWindow):
         self._headerPanel.setRedPlayerAction(self._trial.playersActions[Constants.Player.RED.value][timeStep])
         self._headerPanel.setGreenPlayerAction(self._trial.playersActions[Constants.Player.GREEN.value][timeStep])
         self._headerPanel.setBluePlayerAction(self._trial.playersActions[Constants.Player.BLUE.value][timeStep])
+        self._headerPanel.setRedPlayerEquippedItem(
+            self._trial.playersEquippedItems[Constants.Player.RED.value][timeStep])
+        self._headerPanel.setGreenPlayerEquippedItem(
+            self._trial.playersEquippedItems[Constants.Player.GREEN.value][timeStep])
+        self._headerPanel.setBluePlayerEquippedItem(
+            self._trial.playersEquippedItems[Constants.Player.BLUE.value][timeStep])
 
     def createWidget(self, color: str):
         widget = QWidget()

@@ -120,7 +120,8 @@ class Trial:
         "observations/events/player/marker_removed",
         "observations/events/player/rubble_destroyed",
         "observations/events/mission/perturbation",
-        "observations/events/player/rubble_collapse"
+        "observations/events/player/rubble_collapse",
+        "observations/events/player/itemequipped"
     ]
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
@@ -146,6 +147,7 @@ class Trial:
         self.playersPositions: List[np.ndarray] = []
         self.chatMessages: List[List[Set[ChatMessage]]] = []
         self.playersActions: List[List[Constants.Action]] = []
+        self.playersEquippedItems: List[List[Constants.EquippedItem]] = []
 
     def save(self, filepath: str):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -162,7 +164,8 @@ class Trial:
             "active_blackout": self.activeBlackout,
             "saved_victims": self.savedVictims,
             "picked_up_victims": self.pickedUpVictims,
-            "placed_victims": self.placedVictims
+            "placed_victims": self.placedVictims,
+            "players_equipped_items": self.playersEquippedItems,
         }
 
         with open(filepath, "wb") as f:
@@ -184,6 +187,7 @@ class Trial:
         self.savedVictims = trialPackage["saved_victims"]
         self.pickedUpVictims = trialPackage["picked_up_victims"]
         self.placedVictims = trialPackage["placed_victims"]
+        self.playersEquippedItems = trialPackage["players_equipped_items"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = Trial._sortMessages(trialMessagesFile)
@@ -220,6 +224,7 @@ class Trial:
         currentSavedVictims = set()
         currentPickedUpVictims = set()
         currentPlacedVictims = set()
+        currentPlayersEquippedItems = [Constants.EquippedItem.HAMMER for _ in range(Constants.NUM_ROLES)]
         for message in messages:
             if Trial._isMessageOf(message, "event", "Event:MissionState"):
                 state = message["data"]["mission_state"].lower()
@@ -264,6 +269,13 @@ class Trial:
                 x = message["data"]["x"] - self.map.metadata["min_x"]
                 y = message["data"]["z"] - self.map.metadata["min_y"]
                 currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value] = np.array([x, y])
+            elif Trial._isMessageOf(message, "event", "Event:ItemEquipped"):
+                playerId = message["data"]["participant_id"]
+                playerColor = playerIdToColor[playerId]
+
+                itemName = message["data"]["equippeditemname"]
+                currentPlayersEquippedItems[
+                    Constants.PLAYER_COLOR_MAP[playerColor].value] = Trial._getItemTypeFromStringType(itemName)
 
             if missionStarted:
                 if Trial._isMessageOf(message, "observation", "Event:Scoreboard"):
@@ -417,6 +429,8 @@ class Trial:
                             self.savedVictims.append(currentSavedVictims.copy())
                             self.pickedUpVictims.append(currentPickedUpVictims.copy())
                             self.placedVictims.append(currentPlacedVictims.copy())
+                            for playerIdx, equippedItems in enumerate(self.playersEquippedItems):
+                                equippedItems.append(currentPlayersEquippedItems[playerIdx])
 
                         nextTimeStep = elapsedSeconds + 1
 
@@ -479,6 +493,8 @@ class Trial:
             markerType = Constants.MarkerType.CRITICAL_VICTIM
         elif "threat" in stringType:
             markerType = Constants.MarkerType.THREAT_ROOM
+        elif "rubble" in stringType:
+            markerType = Constants.MarkerType.RUBBLE
         elif "sos" in stringType:
             markerType = Constants.MarkerType.SOS
 
@@ -502,8 +518,31 @@ class Trial:
 
         return victimType
 
-# if __name__ == "__main__":
-#     parser = Trial(
-#         "../data/mission/NotHSRData_TrialMessages_Trial-T000429_Team-TM000067_Member-na_CondBtwn-ASI-UAZ-TA1_CondWin-na_Vers-2.metadata")
-#     parser.parse()
-#     parser.save("../data/post_processed")
+    @staticmethod
+    def _getItemTypeFromStringType(stringType: str) -> Constants.EquippedItem:
+        itemType = None
+        if "hammer" in stringType:
+            itemType = Constants.EquippedItem.HAMMER
+        elif "medical_kit" in stringType:
+            itemType = Constants.EquippedItem.MEDICAL_KIT
+        elif "stretcher" in stringType:
+            itemType = Constants.EquippedItem.STRETCHER
+        elif "novictim" in stringType:
+            itemType = Constants.EquippedItem.NO_VICTIM
+        elif "abrasion" in stringType:
+            itemType = Constants.EquippedItem.VICTIM_A
+        elif "bonedamage" in stringType:
+            itemType = Constants.EquippedItem.VICTIM_B
+        elif "regularvictim" in stringType:
+            itemType = Constants.EquippedItem.REGULAR_VICTIM
+        elif "criticalvictim" in stringType:
+            itemType = Constants.EquippedItem.CRITICAL_VICTIM
+        elif "threat" in stringType:
+            itemType = Constants.EquippedItem.THREAT_ROOM
+        elif "rubble" in stringType:
+            itemType = Constants.EquippedItem.RUBBLE
+        elif "sos" in stringType:
+            itemType = Constants.EquippedItem.SOS
+
+        return itemType
+

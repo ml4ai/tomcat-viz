@@ -44,19 +44,26 @@ class LegendWidget(QWidget):
                                                 alignment=Qt.AlignLeft)
 
         # Markers
-        self._noVictimMarkerIcon = createStampedBlockWidget("O", Constants.Font.TINY_REGULAR.value, "black",
+        self._noVictimMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.NO_VICTIM],
+                                                            Constants.Font.TINY_REGULAR.value, "black",
                                                             Constants.Colors.MARKER.value, QSize(10, 10))
-        self._victimAMarkerIcon = createStampedBlockWidget("A", Constants.Font.TINY_REGULAR.value, "black",
+        self._victimAMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.VICTIM_A],
+                                                           Constants.Font.TINY_REGULAR.value, "black",
                                                            Constants.Colors.MARKER.value, QSize(10, 10))
-        self._victimBMarkerIcon = createStampedBlockWidget("B", Constants.Font.TINY_REGULAR.value, "black",
+        self._victimBMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.VICTIM_B],
+                                                           Constants.Font.TINY_REGULAR.value, "black",
                                                            Constants.Colors.MARKER.value, QSize(10, 10))
-        self._regularVictimMarkerIcon = createStampedBlockWidget("R", Constants.Font.TINY_REGULAR.value, "black",
-                                                                 Constants.Colors.MARKER.value, QSize(10, 10))
-        self._criticalVictimMarkerIcon = createStampedBlockWidget("C", Constants.Font.TINY_REGULAR.value, "black",
-                                                                  Constants.Colors.MARKER.value, QSize(10, 10))
-        self._threatMarkerIcon = createStampedBlockWidget("T", Constants.Font.TINY_REGULAR.value, "black",
+        self._regularVictimMarkerIcon = createStampedBlockWidget(
+            Constants.MARKER_TYPE_MAP[Constants.MarkerType.REGULAR_VICTIM], Constants.Font.TINY_REGULAR.value, "black",
+            Constants.Colors.MARKER.value, QSize(10, 10))
+        self._criticalVictimMarkerIcon = createStampedBlockWidget(
+            Constants.MARKER_TYPE_MAP[Constants.MarkerType.CRITICAL_VICTIM], Constants.Font.TINY_REGULAR.value, "black",
+            Constants.Colors.MARKER.value, QSize(10, 10))
+        self._threatMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.THREAT_ROOM],
+                                                          Constants.Font.TINY_REGULAR.value, "black",
                                                           Constants.Colors.MARKER.value, QSize(10, 10))
-        self._sosMarkerIcon = createStampedBlockWidget("S", Constants.Font.TINY_REGULAR.value, "black",
+        self._sosMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.SOS],
+                                                       Constants.Font.TINY_REGULAR.value, "black",
                                                        Constants.Colors.MARKER.value, QSize(10, 10))
 
         self._noVictimMarkerLabel = createLabel("No Victim", Constants.Font.TINY_REGULAR.value,
