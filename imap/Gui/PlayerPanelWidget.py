@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.Qt import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 
-from imap.Gui.Utils import createLabel, createVerticalSeparator
+from imap.Gui.Utils import createLabel, createVerticalSeparator, createEmptyWidget
 from imap.Common.Constants import Constants
 
 
@@ -34,9 +34,9 @@ class PlayerPanelWidget(QWidget):
         boldFont = QFont("Arial", 14, QFont.Bold)
         regularFont = QFont("Arial", 14)
 
-        self._nameLabel = createLabel("", boldFont, color, Qt.AlignCenter)
-        self._equippedItemIcon = self.createWidget(color)
-        self._actionLabel = createLabel("", regularFont, "gray", Qt.AlignLeft)
+        self._nameLabel = createLabel("NAME", boldFont, color, Qt.AlignCenter)
+        self._equippedItemIcon = createEmptyWidget(color, QSize(20, 20))
+        self._actionLabel = createLabel("Player is doing...", regularFont, "gray", Qt.AlignLeft)
 
     def _configureLayout(self):
         main_layout = QVBoxLayout(self)
@@ -49,11 +49,4 @@ class PlayerPanelWidget(QWidget):
 
         main_layout.addWidget(self._nameLabel)
         main_layout.addLayout(bottom_layout)
-
-    def createWidget(self, color: str):
-        # To be removed
-        widget = QWidget()
-        widget.setStyleSheet(f"background-color:{color};")
-        widget.setFixedSize(20, 20)
-        return widget
 

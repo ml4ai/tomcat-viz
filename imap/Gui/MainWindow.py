@@ -150,6 +150,7 @@ class MainWindow(QMainWindow):
         self._headerPanel.setRedPlayerName(self._trial.metadata["red_id"])
         self._headerPanel.setGreenPlayerName(self._trial.metadata["green_id"])
         self._headerPanel.setBluePlayerName(self._trial.metadata["blue_id"])
+        self._updateHeaderInfo(0)
 
     def _loadDefaultMap(self):
         objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.1_3D_sm_v1.0.json")

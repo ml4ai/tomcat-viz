@@ -21,8 +21,8 @@ class HeaderWidget(QWidget):
         self._legendPanel = LegendWidget()
 
         # Central info
-        self._trialLabel = createLabel("T000032", Constants.Font.SMALL_REGULAR.value)
-        self._teamLabel = createLabel("TM00021", Constants.Font.SMALL_REGULAR.value)
+        self._trialLabel = createLabel("...", Constants.Font.SMALL_REGULAR.value, "gray")
+        self._teamLabel = createLabel("...", Constants.Font.SMALL_REGULAR.value, "gray")
         self._scoreLabel = createLabel("0", Constants.Font.LARGE_BOLD.value, alignment=Qt.AlignCenter)
 
         # Player panels
@@ -82,19 +82,21 @@ class HeaderWidget(QWidget):
         mainLayout.setContentsMargins(0, 0, 0, 0)
 
         centralLayout = self._getCentralLayout()
-        mainLayout.addWidget(self._legendPanel, 20)
+        mainLayout.addWidget(self._legendPanel, 19)
+        mainLayout.addWidget(createVerticalSeparator(), 1)
         mainLayout.addLayout(centralLayout, 60)
-        mainLayout.addWidget(self._blackoutPanel, 20)
+        mainLayout.addWidget(createVerticalSeparator(), 1)
+        mainLayout.addWidget(self._blackoutPanel, 19)
         mainLayout.addStretch()
 
     def _getCentralLayout(self) -> QLayout:
         trialNumberFormLayout = QFormLayout()
-        trialNumberFormLayout.addRow(createLabel("Trial", Constants.Font.SMALL_BOLD.value), self._trialLabel)
+        trialNumberFormLayout.addRow(createLabel("Trial:", Constants.Font.SMALL_BOLD.value), self._trialLabel)
         trialNumberFormLayout.setFormAlignment(Qt.AlignRight)
         trialNumberFormLayout.setLabelAlignment(Qt.AlignLeft)
         trialNumberFormLayout.setContentsMargins(0, 0, 10, 0)
         teamNumberFormLayout = QFormLayout()
-        teamNumberFormLayout.addRow(createLabel("Team", Constants.Font.SMALL_BOLD.value), self._teamLabel)
+        teamNumberFormLayout.addRow(createLabel("Team:", Constants.Font.SMALL_BOLD.value), self._teamLabel)
         teamNumberFormLayout.setFormAlignment(Qt.AlignLeft)
         teamNumberFormLayout.setLabelAlignment(Qt.AlignLeft)
         teamNumberFormLayout.setContentsMargins(10, 0, 0, 0)
@@ -115,25 +117,3 @@ class HeaderWidget(QWidget):
         layout.addLayout(playerInfoLayout, 60)
 
         return layout
-
-
-# if __name__ == '__main__':
-#     from PyQt5.Qt import QFontDatabase, QTreeWidget, QTreeWidgetItem
-#
-#     database = QFontDatabase()
-#     fontTree = QTreeWidget()
-#     fontTree.setColumnCount(2)
-#
-#     for family in database.families():
-#         familyItem = QTreeWidgetItem(fontTree)
-#         familyItem.setText(0, family)
-#
-#         for style in database.styles(family):
-#             styleItem = QTreeWidgetItem(familyItem)
-#             styleItem.setText(0, style)
-#
-#             sizes = " "
-#             for points in database.smoothSizes(family, style):
-#                 sizes += str(points) + " "
-#
-#             styleItem.setText(1, sizes.strip())
