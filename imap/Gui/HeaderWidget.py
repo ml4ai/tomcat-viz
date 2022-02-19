@@ -27,11 +27,11 @@ class HeaderWidget(QWidget):
 
         # Player panels
         self._redPanel = PlayerPanelWidget(Constants.Colors.RED_PLAYER.value)
-        # self._redPanel.setEquippedItem(Constants.EquippedItem.MEDICAL_KIT)
+        self._redPanel.setEquippedItem(Constants.EquippedItem.MEDICAL_KIT)
         self._greenPanel = PlayerPanelWidget(Constants.Colors.GREEN_PLAYER.value)
-        # self._greenPanel.setEquippedItem(Constants.EquippedItem.STRETCHER)
+        self._greenPanel.setEquippedItem(Constants.EquippedItem.STRETCHER)
         self._bluePanel = PlayerPanelWidget(Constants.Colors.BLUE_PLAYER.value)
-        # self._bluePanel.setEquippedItem(Constants.EquippedItem.HAMMER)
+        self._bluePanel.setEquippedItem(Constants.EquippedItem.HAMMER)
 
         # Blackout area
         self._blackoutPanel = BlackoutWidget()

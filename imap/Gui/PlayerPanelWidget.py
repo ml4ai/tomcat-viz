@@ -36,7 +36,7 @@ class PlayerPanelWidget(QWidget):
         regularFont = QFont("Arial", 14)
 
         self._nameLabel = createLabel("NAME", boldFont, color, Qt.AlignCenter)
-        self._equippedItemIcon = EquippedItemWidget(20, 20) #createEmptyWidget(Constants.Colors.MARKER.value, QSize(20, 20))
+        self._equippedItemIcon = EquippedItemWidget(20, 20)
         self._actionLabel = createLabel("Player is doing...", regularFont, "gray", Qt.AlignLeft)
 
     def _configureLayout(self):

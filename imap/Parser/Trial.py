@@ -210,6 +210,7 @@ class Trial:
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
         self.activeBlackout = []
         self.savedVictims = []
+        self.playersEquippedItems = [[] for _ in range(Constants.NUM_ROLES)]
 
         # These variables contain valid values per time step.
         # Some will have their value reset in the end of a time step.
