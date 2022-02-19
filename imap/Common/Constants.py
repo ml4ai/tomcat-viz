@@ -24,7 +24,7 @@ class Constants:
 
     class Colors(Enum):
         RED_PLAYER = "#E30B21"
-        GREEN_PLAYER = "#13F000"
+        GREEN_PLAYER = "#13D200"
         BLUE_PLAYER = "#0045FA"
         VICTIM_A = "#02B860"
         VICTIM_B = "#02B860"
@@ -34,6 +34,8 @@ class Constants:
         RUBBLE = "#808080"
         MARKER = "#DE87F0"
         INCONSISTENCY = "#FA8B03"
+        DOOR = "#000000"
+        APP_BACKGROUND = "#E8E0E7"
 
     # TODO - remove?
     class BlockType(Enum):

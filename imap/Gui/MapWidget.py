@@ -34,6 +34,7 @@ class MapWidget(QWidget):
         self._blockSize = blockSize
         self._playerSize = playerSize
 
+        self.setFixedWidth(width)
         self._scene = CustomScene(0, 0, width, height, Qt.white)
         self._view = QGraphicsView(self._scene, self)
 

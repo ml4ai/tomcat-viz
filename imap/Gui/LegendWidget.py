@@ -65,6 +65,9 @@ class LegendWidget(QWidget):
         self._sosMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.SOS],
                                                        Constants.Font.TINY_REGULAR.value, "black",
                                                        Constants.Colors.MARKER.value, QSize(10, 10))
+        self._rubbleMarkerIcon = createStampedBlockWidget(Constants.MARKER_TYPE_MAP[Constants.MarkerType.RUBBLE],
+                                                          Constants.Font.TINY_REGULAR.value, "black",
+                                                          Constants.Colors.MARKER.value, QSize(10, 10))
 
         self._noVictimMarkerLabel = createLabel("No Victim", Constants.Font.TINY_REGULAR.value,
                                                 alignment=Qt.AlignLeft)
@@ -80,15 +83,18 @@ class LegendWidget(QWidget):
                                               alignment=Qt.AlignLeft)
         self._sosMarkerLabel = createLabel("SOS", Constants.Font.TINY_REGULAR.value,
                                            alignment=Qt.AlignLeft)
+        self._rubbleMarkerLabel = createLabel("Rubble", Constants.Font.TINY_REGULAR.value,
+                                              alignment=Qt.AlignLeft)
 
         # Misc
         self._rubbleIcon = BlockIconWidget("white", Constants.Colors.RUBBLE.value, QSize(10, 10), Qt.Dense5Pattern,
                                            Constants.Colors.RUBBLE.value)
+        self._doorIcon = BlockIconWidget("white", "white", QSize(10, 10), Qt.Dense7Pattern, Constants.Colors.DOOR.value)
         self._signalTriggerIcon = BlockIconWidget("white", "black", QSize(10, 10), None, None, "V", "black",
                                                   Constants.Font.TINY_REGULAR.value)
         self._rubbleCollapseTriggerIcon = createEmptyWidget(Constants.Colors.THREAT_ACTIVATION.value, QSize(10, 10))
-        self._rubbleLabel = createLabel("Rubble", Constants.Font.TINY_REGULAR.value,
-                                        alignment=Qt.AlignLeft)
+        self._rubbleLabel = createLabel("Rubble", Constants.Font.TINY_REGULAR.value, alignment=Qt.AlignLeft)
+        self._doorLabel = createLabel("Door", Constants.Font.TINY_REGULAR.value, alignment=Qt.AlignLeft)
         self._signalTriggerLabel = createLabel("Victim Signal Trigger", Constants.Font.TINY_REGULAR.value,
                                                alignment=Qt.AlignLeft)
         self._rubbleCollapseTriggerLabel = createLabel("Rubble Collapse Trigger", Constants.Font.TINY_REGULAR.value,
@@ -127,18 +133,20 @@ class LegendWidget(QWidget):
         gridLayout.addWidget(self._miscSubtitle, 0, 0, 1, 2)
         gridLayout.addWidget(self._rubbleIcon, 1, 0)
         gridLayout.addWidget(self._rubbleLabel, 1, 1)
-        gridLayout.addWidget(self._signalTriggerIcon, 2, 0)
-        gridLayout.addWidget(self._signalTriggerLabel, 2, 1)
-        gridLayout.addWidget(self._rubbleCollapseTriggerIcon, 3, 0)
-        gridLayout.addWidget(self._rubbleCollapseTriggerLabel, 3, 1)
+        gridLayout.addWidget(self._doorIcon, 2, 0)
+        gridLayout.addWidget(self._doorLabel, 2, 1)
+        gridLayout.addWidget(self._signalTriggerIcon, 3, 0)
+        gridLayout.addWidget(self._signalTriggerLabel, 3, 1)
+        gridLayout.addWidget(self._rubbleCollapseTriggerIcon, 4, 0)
+        gridLayout.addWidget(self._rubbleCollapseTriggerLabel, 4, 1)
 
-        gridLayout.addWidget(self._victimsSubtitle, 4, 0, 1, 2)
-        gridLayout.addLayout(victimAIconLayout, 5, 0)
-        gridLayout.addWidget(self._victimALabel, 5, 1)
-        gridLayout.addLayout(victimBIconLayout, 6, 0)
-        gridLayout.addWidget(self._victimBLabel, 6, 1)
-        gridLayout.addLayout(criticalVictimIconLayout, 7, 0)
-        gridLayout.addWidget(self._criticalVictimLabel, 7, 1)
+        gridLayout.addWidget(self._victimsSubtitle, 5, 0, 1, 2)
+        gridLayout.addLayout(victimAIconLayout, 6, 0)
+        gridLayout.addWidget(self._victimALabel, 6, 1)
+        gridLayout.addLayout(victimBIconLayout, 7, 0)
+        gridLayout.addWidget(self._victimBLabel, 7, 1)
+        gridLayout.addLayout(criticalVictimIconLayout, 8, 0)
+        gridLayout.addWidget(self._criticalVictimLabel, 8, 1)
 
         gridLayout.addWidget(self._markersSubtitle, 0, 2, 1, 2)
         gridLayout.addWidget(self._noVictimMarkerIcon, 1, 2)
@@ -155,6 +163,8 @@ class LegendWidget(QWidget):
         gridLayout.addWidget(self._threatMarkerLabel, 6, 3)
         gridLayout.addWidget(self._sosMarkerIcon, 7, 2)
         gridLayout.addWidget(self._sosMarkerLabel, 7, 3)
+        gridLayout.addWidget(self._rubbleMarkerIcon, 8, 2)
+        gridLayout.addWidget(self._rubbleMarkerLabel, 8, 3)
 
         mainLayout = QVBoxLayout(self)
         mainLayout.setContentsMargins(0, 0, 0, 0)

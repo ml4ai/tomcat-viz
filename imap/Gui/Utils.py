@@ -46,7 +46,10 @@ class BlockIconWidget(QWidget):
         self._text = text
         self._textPen = None if textColor is None else QPen(QColor(textColor), 1, Qt.SolidLine)
         self._font = font
-        self.setStyleSheet(f"background-color:{backgroundColor};")
+        palette = QPalette()
+        palette.setColor(QPalette.Active, QPalette.Window, QColor(backgroundColor))
+        self.setAutoFillBackground(True)
+        self.setPalette(palette)
         self.setFixedSize(size)
 
     def paintEvent(self, event):

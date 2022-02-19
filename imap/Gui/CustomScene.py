@@ -60,7 +60,8 @@ class CustomScene(QGraphicsScene):
         return self._drawBlock(x, y, scale, blockSize, color, color)
 
     def drawDoor(self, x: float, y: float, scale: float, blockSize: float):
-        return self._drawBlock(x, y, scale, blockSize, Qt.black, Qt.white, Qt.Dense7Pattern)
+        color = QColor(Constants.Colors.DOOR.value)
+        return self._drawBlock(x, y, scale, blockSize, color, Qt.white, Qt.Dense7Pattern)
 
     def drawMissingVictim(self, x: float, y: float, scale: float, blockSize: float):
         color = QColor(Constants.Colors.INCONSISTENCY.value)

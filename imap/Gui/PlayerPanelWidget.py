@@ -37,7 +37,7 @@ class PlayerPanelWidget(QWidget):
 
         self._nameLabel = createLabel("NAME", boldFont, color, Qt.AlignCenter)
         self._equippedItemIcon = EquippedItemWidget(20, 20)
-        self._actionLabel = createLabel("Player is doing...", regularFont, "gray", Qt.AlignLeft)
+        self._actionLabel = createLabel("Player is doing...", regularFont, "gray", Qt.AlignCenter)
 
     def _configureLayout(self):
         main_layout = QVBoxLayout(self)
