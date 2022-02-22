@@ -1,15 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
-from PyQt5.Qt import QPalette, QColor
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.Qt import QPalette, QColor, Qt
 
 from imap.Parser.Estimates import Estimates
 from imap.Gui.MultiTimeSeriesPlotWidget import MultiTimeSeriesPlotWidget
 from imap.Gui.CollapsiblePanel import CollapsiblePanel
-from imap.Gui.Utils import createHorizontalSeparator
+from imap.Gui.Utils import createHorizontalSeparator, createVerticalSeparator
 
 
 class EstimatesWidget(QWidget):
 
-    def __init__(self):
+    def __init__(self, verticalStacking: bool = True):
         super().__init__()
 
         palette = QPalette()
@@ -26,10 +26,22 @@ class EstimatesWidget(QWidget):
             CollapsiblePanel("Team")
         ]
 
-        layout = QVBoxLayout(self)
-        for panel in self._panels:
-            layout.addWidget(panel)
-            layout.addWidget(createHorizontalSeparator())
+        if verticalStacking:
+            layout = QVBoxLayout(self)
+
+            for panel in self._panels:
+                layout.addWidget(panel)
+                layout.addWidget(createHorizontalSeparator())
+        else:
+            layout = QHBoxLayout(self)
+
+            for panel in self._panels:
+                widgetLayout = QVBoxLayout()
+                widgetLayout.setContentsMargins(0, 0, 0, 0)
+                widgetLayout.addWidget(panel)
+                layout.addLayout(widgetLayout)
+                layout.addWidget(createVerticalSeparator())
+                widgetLayout.addStretch()
         layout.addStretch()
 
     def updateFor(self, timeStep: int):

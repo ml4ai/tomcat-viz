@@ -1,8 +1,10 @@
 from enum import Enum
-from PyQt5.Qt import QFont
+from PyQt5.Qt import QFont, QSize
 
 
 class Constants:
+    MIN_WINDOW_SIZE = QSize(1800, 1020)
+
     NUM_ROLES = 3
 
     class Player(Enum):

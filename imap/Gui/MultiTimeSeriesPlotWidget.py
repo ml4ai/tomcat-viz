@@ -15,13 +15,13 @@ class MultiTimeSeriesPlotWidget(QWidget):
 
         self._plotWidgets = []
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         for i, series in enumerate(timeSeries):
             plotWidget = TimeSeriesPlotWidget(series)
             self._plotWidgets.append(plotWidget)
             layout.addWidget(plotWidget)
             if i < len(timeSeries) - 1:
                 layout.addWidget(createHorizontalSeparator())
-            layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
 
     def updateFor(self, timeStep: int):

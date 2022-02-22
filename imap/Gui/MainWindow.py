@@ -36,6 +36,10 @@ class MainWindow(QMainWindow):
 
         self._createMenu()
 
+    def closeEvent(self, event):
+        self._tomcatWidget.closeApp()
+        event.accept()
+
     def _createMenu(self):
         self._createTrialMenu()
         self._createEstimatesMenu()

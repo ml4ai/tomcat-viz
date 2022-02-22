@@ -28,7 +28,8 @@ class CollapsiblePanel(QWidget):
         self.contentArea.setMaximumHeight(0)
         self.contentArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.contentArea.setFrameShape(QFrame.NoFrame)
-        self.contentArea.setLayout(QVBoxLayout())
+        self._contentAreaLayout = QVBoxLayout()
+        self.contentArea.setLayout(self._contentAreaLayout)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
@@ -85,7 +86,7 @@ class CollapsiblePanel(QWidget):
         self.clearContent()
 
         self._hasCentralWidget = True
-        self.contentArea.layout().addWidget(widget)
+        self._contentAreaLayout.addWidget(widget)
         collapsed_height = (
                 self.sizeHint().height() - self.contentArea.maximumHeight()
         )

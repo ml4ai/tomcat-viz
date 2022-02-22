@@ -14,6 +14,7 @@ from imap.Parser.Trial import Trial
 from imap.Parser.Estimates import Estimates
 from imap.Gui.HeaderWidget import HeaderWidget
 from imap.Gui.TimeSliderWidget import TimeSliderWidget
+from imap.Gui.DockEstimates import DockEstimates
 
 import json
 import numpy as np
@@ -28,7 +29,7 @@ class TomcatVisualizerWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setMinimumSize(1800, 1020)
+        self.setMinimumSize(Constants.MIN_WINDOW_SIZE)
         palette = QPalette()
         palette.setColor(QPalette.Active, QPalette.Window, QColor(Constants.Colors.APP_BACKGROUND.value))
         self.setAutoFillBackground(True)
@@ -69,6 +70,9 @@ class TomcatVisualizerWidget(QWidget):
             self._estimatesWidget.loadEstimates(Estimates(filepath))
             self._estimatesWidget.updateFor(self._timeSlider.value())
 
+    def closeApp(self):
+        self._estimatesWidget.close()
+
     def _createWidgets(self):
         self._headerPanel = HeaderWidget()
 
@@ -84,7 +88,7 @@ class TomcatVisualizerWidget(QWidget):
 
         self._estimatesHeaderLabel = createLabel("Probability Estimates", Constants.Font.SMALL_BOLD.value, "black",
                                                  Qt.AlignLeft)
-        self._estimatesWidget = EstimatesWidget()
+        self._estimatesWidget = DockEstimates()
 
     def _configureLayout(self):
         mainLayout = QHBoxLayout(self)
@@ -101,15 +105,15 @@ class TomcatVisualizerWidget(QWidget):
         chatPanelWidget = QWidget()
         chatPanelWidget.setLayout(chatLayout)
 
-        scrollArea = QScrollArea()
-        scrollArea.setWidget(self._estimatesWidget)
-        scrollArea.setWidgetResizable(True)
-        estimatesLayout = QVBoxLayout()
-        estimatesLayout.setContentsMargins(0, 0, 0, 0)
-        estimatesLayout.addWidget(self._estimatesHeaderLabel)
-        estimatesLayout.addWidget(scrollArea)
+        # scrollArea = QScrollArea()
+        # scrollArea.setWidget(self._estimatesWidget)
+        # scrollArea.setWidgetResizable(True)
+        self._estimatesLayout = QVBoxLayout()
+        self._estimatesLayout.setContentsMargins(0, 0, 0, 0)
+        self._estimatesLayout.addWidget(self._estimatesHeaderLabel)
+        self._estimatesLayout.addWidget(self._estimatesWidget.dockedWidget)
         estimatesPanelWidget = QWidget()
-        estimatesPanelWidget.setLayout(estimatesLayout)
+        estimatesPanelWidget.setLayout(self._estimatesLayout)
 
         rightPanelSplitter = QSplitter(Qt.Vertical)
         rightPanelSplitter.addWidget(chatPanelWidget)
@@ -169,9 +173,3 @@ class TomcatVisualizerWidget(QWidget):
             self._trial.playersEquippedItems[Constants.Player.GREEN.value][timeStep])
         self._headerPanel.setBluePlayerEquippedItem(
             self._trial.playersEquippedItems[Constants.Player.BLUE.value][timeStep])
-
-    def createWidget(self, color: str):
-        widget = QWidget()
-        widget.setStyleSheet(f"background-color:{color};")
-        widget.setFixedSize(20, 20)
-        return widget
