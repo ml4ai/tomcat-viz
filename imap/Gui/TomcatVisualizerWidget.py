@@ -126,13 +126,16 @@ class TomcatVisualizerWidget(QWidget):
         self._estimatesWidget.updateFor(newTimeStep)
 
     def _initializeTrial(self):
-        self._timeSlider.setTimeSteps(self._trial.timeSteps)
-        self._timeSlider.reset()
-        self._timeSlider.setEnabled(True)
+        self._mapWidget.reset()
+        self._loadDefaultMap()
 
         self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
         self._chatWidget.loadTrial(self._trial)
+
+        self._timeSlider.setTimeSteps(self._trial.timeSteps)
+        self._timeSlider.reset()
+        self._timeSlider.setEnabled(True)
 
     def _initializeHeaderInfo(self):
         self._headerPanel.setTrialNumber(self._trial.metadata["trial_number"])

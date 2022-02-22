@@ -8,7 +8,7 @@ from imap.Parser.Estimates import TimeSeries
 
 
 class TimeSeriesPlotWidget(PlotWidget):
-    NUM_VISIBLE_TIME_STEPS = 20
+    NUM_VISIBLE_TIME_STEPS = 5
 
     def __init__(self, series: TimeSeries):
         super().__init__()
@@ -27,8 +27,6 @@ class TimeSeriesPlotWidget(PlotWidget):
         self.setMinimumHeight(150)
         self.setMaximumHeight(150)
         self.centralWidget.hideButtons()
-
-        # self.palette = ...
 
     def _initializePlot(self):
         self._dataItems = []
@@ -53,7 +51,10 @@ class TimeSeriesPlotWidget(PlotWidget):
                     y = self._series.values[i][timeStep - TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:timeStep]
 
                 plot.setData(x, y)
-                self._baselineDataItem.setData(x, [0.5] * len(x))
+                if i == 0:
+                    self._baselineDataItem.setData(x, [0.5] * len(x))
+                    ax = self.getAxis('bottom')
+                    ax.setTicks([[(v, secondsToTime(v)) for v in self._times]])
 
     def minimumSizeHint(self) -> QSize:
         return QSize(super().minimumSizeHint().width(), 150)

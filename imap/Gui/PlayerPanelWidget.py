@@ -32,22 +32,20 @@ class PlayerPanelWidget(QWidget):
         self._actionLabel.setText(text)
 
     def _createWidgets(self, color: str):
-        boldFont = QFont("Arial", 14, QFont.Bold)
-        regularFont = QFont("Arial", 14)
-
-        self._nameLabel = createLabel("NAME", boldFont, color, Qt.AlignCenter)
+        self._nameLabel = createLabel("NAME", Constants.Font.SMALL_BOLD.value, color, Qt.AlignCenter)
         self._equippedItemIcon = EquippedItemWidget(20, 20)
-        self._actionLabel = createLabel("Player is doing...", regularFont, "gray", Qt.AlignCenter)
+        self._actionLabel = createLabel("Player is doing...", Constants.Font.SMALL_REGULAR.value, "gray",
+                                        Qt.AlignCenter)
 
     def _configureLayout(self):
-        main_layout = QVBoxLayout(self)
+        mainLayout = QVBoxLayout(self)
+        mainLayout.setContentsMargins(10, 0, 0, 10)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.addWidget(self._equippedItemIcon)
-        bottom_layout.addWidget(createVerticalSeparator())
-        bottom_layout.addWidget(self._actionLabel)
-        bottom_layout.addStretch()
+        bottomLayout = QHBoxLayout()
+        bottomLayout.addWidget(self._equippedItemIcon)
+        bottomLayout.addWidget(createVerticalSeparator())
+        bottomLayout.addWidget(self._actionLabel)
+        bottomLayout.addStretch()
 
-        main_layout.addWidget(self._nameLabel)
-        main_layout.addLayout(bottom_layout)
-
+        mainLayout.addWidget(self._nameLabel)
+        mainLayout.addLayout(bottomLayout)

@@ -78,10 +78,10 @@ class Constants:
         RUBBLE = 10
 
     class Font(Enum):
-        TINY_REGULAR = QFont("Helvetica", 10)
-        SMALL_BOLD = QFont("Helvetica", 14, QFont.Bold)
-        SMALL_REGULAR = QFont("Helvetica", 14)
-        LARGE_BOLD = QFont("Helvetica", 40)
+        TINY_REGULAR = QFont("Inconsolata", 11)
+        SMALL_BOLD = QFont("Inconsolata", 14, QFont.Bold)
+        SMALL_REGULAR = QFont("Inconsolata", 14)
+        LARGE_BOLD = QFont("Inconsolata", 40, QFont.Bold)
 
     MARKER_TYPE_MAP = {
         MarkerType.NO_VICTIM: "O",

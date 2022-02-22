@@ -100,6 +100,25 @@ class MapWidget(QWidget):
         self._lastDrawnTimeStep = timeStep
         self._maxDrawnTimeStep = max(self._maxDrawnTimeStep, timeStep)
 
+    def reset(self):
+        self._scene.clear()
+        self._map = None
+        self._trial = None
+        self._lastDrawnTimeStep = -1
+        self._maxDrawnTimeStep = -1
+        self._sceneObjectActions: List[List[SceneObjectAction]] = [[]]
+        self._currPlayersBlocks = []
+        self._playersPaths = []
+        self._playersPathItems = []
+        self._addedPlayerItems = [[]]
+        self._removedPlayerItems = [[]]
+        self._addedBlockItems = [[]]
+        self._removedBlockItems = [[]]
+        self._markerItems: Dict[Position, QGraphicsItem] = {}
+        self._rubbleCounts: Dict[Position, int] = {}
+        self._rubbleItems: Dict[Position, QGraphicsItem] = {}
+        self._victimItems: Dict[Position, QGraphicsItem] = {}
+
     def _drawWallsAndDoors(self):
         for i in range(self._map.grid.shape[0]):
             for j in range(self._map.grid.shape[1]):
