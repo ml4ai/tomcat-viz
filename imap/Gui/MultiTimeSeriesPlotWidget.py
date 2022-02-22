@@ -24,9 +24,3 @@ class MultiTimeSeriesPlotWidget(QWidget):
     def updateFor(self, timeStep: int):
         for plotWidget in self._plotWidgets:
             plotWidget.updateFor(timeStep)
-
-    # def minimumSizeHint(self) -> QSize:
-    #     return QSize(super().minimumSizeHint().width(), 150 * len(self._multiPlotWidgets))
-    #
-    # def sizeHint(self) -> QSize:
-    #     return QSize(super().sizeHint().width(), 150 * len(self._multiPlotWidgets))
