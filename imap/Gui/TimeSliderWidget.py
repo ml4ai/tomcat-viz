@@ -31,6 +31,9 @@ class TimeSliderWidget(QWidget):
             self._rewindButton.setEnabled(False)
             self._forwardButton.setEnabled(False)
 
+    def value(self):
+        return self._timeSlider.value()
+
     def _createWidgets(self):
         self._timerLabel = createLabel("00:00", Constants.Font.SMALL_REGULAR.value, alignment=Qt.AlignCenter)
         self._timeSlider = QSlider(Qt.Horizontal)

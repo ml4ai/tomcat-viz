@@ -5,11 +5,14 @@ from imap.Common.Constants import Constants
 
 
 class TimeSeries:
-    def __init__(self, name: str, values: List[List[float]]):
+    def __init__(self, name: str, values: List[List[float]], labels: List[str] = None):
+        assert labels is None or len(labels) == len(values)
+
         self.name = name
         self.values = values
         self.cardinality = len(values)
         self.size = len(values[0]) if self.cardinality > 0 else 0
+        self.labels = [str(i) for i in range(self.cardinality)] if labels is None else labels
 
 
 class Estimates:
@@ -44,8 +47,3 @@ class Estimates:
                     variableName = " ".join(terms)
                     series = TimeSeries(variableName, values)
                     self.teamSeries.append(series)
-
-
-
-
-

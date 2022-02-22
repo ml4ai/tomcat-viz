@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout
 
 from imap.Parser.Estimates import TimeSeries
 from imap.Gui.TimeSeriesPlotWidget import TimeSeriesPlotWidget
+from imap.Gui.Utils import createHorizontalSeparator
 
 
 class MultiTimeSeriesPlotWidget(QWidget):
@@ -14,10 +15,12 @@ class MultiTimeSeriesPlotWidget(QWidget):
 
         self._plotWidgets = []
         layout = QVBoxLayout(self)
-        for series in timeSeries:
+        for i, series in enumerate(timeSeries):
             plotWidget = TimeSeriesPlotWidget(series)
             self._plotWidgets.append(plotWidget)
             layout.addWidget(plotWidget)
+            if i < len(timeSeries) - 1:
+                layout.addWidget(createHorizontalSeparator())
             layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
 

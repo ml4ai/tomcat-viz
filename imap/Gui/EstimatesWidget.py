@@ -1,15 +1,21 @@
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.Qt import QPalette, QColor
 
 from imap.Parser.Estimates import Estimates
 from imap.Gui.MultiTimeSeriesPlotWidget import MultiTimeSeriesPlotWidget
 from imap.Gui.CollapsiblePanel import CollapsiblePanel
+from imap.Gui.Utils import createHorizontalSeparator
 
 
 class EstimatesWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+
+        palette = QPalette()
+        palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
+        self.setAutoFillBackground(True)
+        self.setPalette(palette)
 
         self._multiPlotWidgets = []
 
@@ -23,6 +29,7 @@ class EstimatesWidget(QWidget):
         layout = QVBoxLayout(self)
         for panel in self._panels:
             layout.addWidget(panel)
+            layout.addWidget(createHorizontalSeparator())
         layout.addStretch()
 
     def updateFor(self, timeStep: int):

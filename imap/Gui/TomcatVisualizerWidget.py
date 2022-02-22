@@ -67,6 +67,7 @@ class TomcatVisualizerWidget(QWidget):
     def loadEstimates(self, filepath: str):
         if filepath != "":
             self._estimatesWidget.loadEstimates(Estimates(filepath))
+            self._estimatesWidget.updateFor(self._timeSlider.value())
 
     def _createWidgets(self):
         self._headerPanel = HeaderWidget()
