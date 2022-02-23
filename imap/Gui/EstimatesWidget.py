@@ -22,10 +22,10 @@ class EstimatesWidget(QWidget):
         self._legendToggleCallback = None
 
         self._panels = [
-            CollapsiblePanel("Red Player"),
-            CollapsiblePanel("Green Player"),
-            CollapsiblePanel("Blue Player"),
-            CollapsiblePanel("Team")
+            CollapsiblePanel("Red Player", 0),
+            CollapsiblePanel("Green Player", 1),
+            CollapsiblePanel("Blue Player", 2),
+            CollapsiblePanel("Team", 3)
         ]
 
         if verticalStacking:
@@ -71,3 +71,10 @@ class EstimatesWidget(QWidget):
 
     def toggleLegend(self, legendIndex: int, timeSeriesIndex: int, groupIndex: int):
         self._multiPlotWidgets[groupIndex].toggleLegend(legendIndex, timeSeriesIndex)
+
+    def setPanelToggleCallback(self, callback: Callable):
+        for panel in self._panels:
+            panel.setToggleCallback(callback)
+
+    def togglePanel(self, panelIndex: int):
+        self._panels[panelIndex].toggle()

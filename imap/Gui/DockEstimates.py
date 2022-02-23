@@ -9,14 +9,15 @@ from imap.Common.Constants import Constants
 
 class UndockedWidget(QWidget):
 
-    def __init__(self, dockCallback: Callable, legendToggleCallback: Callable):
+    def __init__(self, dockCallback: Callable, legendToggleCallback: Callable, panelToggleCallback: Callable):
         super().__init__()
 
         self._dockCallback = dockCallback
         self._legendToggleCallback = legendToggleCallback
+        self._panelToggleCallback = panelToggleCallback
 
         palette = QPalette()
-        palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
+        palette.setColor(QPalette.Active, QPalette.Window, QColor(Constants.Colors.APP_BACKGROUND.value))
         self.setAutoFillBackground(True)
         self.setPalette(palette)
         self.setWindowTitle("Probability Estimates")
@@ -28,6 +29,7 @@ class UndockedWidget(QWidget):
     def _createWidgets(self):
         self.estimatesWidget = EstimatesWidget(False)
         self.estimatesWidget.setLegendToggleCallback(self._legendToggleCallback)
+        self.estimatesWidget.setPanelToggleCallback(self._panelToggleCallback)
 
         self._dockButton = QPushButton("Attach to Main Window")
         self._dockButton.clicked.connect(self._onDockButtonClick)
@@ -52,14 +54,15 @@ class UndockedWidget(QWidget):
 
 class DockedWidget(QWidget):
 
-    def __init__(self, undockCallback: Callable, legendToggleCallback: Callable):
+    def __init__(self, undockCallback: Callable, legendToggleCallback: Callable, panelToggleCallback: Callable):
         super().__init__()
 
         self._undockCallback = undockCallback
         self._legendToggleCallback = legendToggleCallback
+        self._panelToggleCallback = panelToggleCallback
 
         palette = QPalette()
-        palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
+        palette.setColor(QPalette.Active, QPalette.Window, QColor(Constants.Colors.APP_BACKGROUND.value))
         self.setAutoFillBackground(True)
         self.setPalette(palette)
 
@@ -69,6 +72,7 @@ class DockedWidget(QWidget):
     def _createWidgets(self):
         self.estimatesWidget = EstimatesWidget()
         self.estimatesWidget.setLegendToggleCallback(self._legendToggleCallback)
+        self.estimatesWidget.setPanelToggleCallback(self._panelToggleCallback)
 
         self._undockButton = QPushButton("Detach from Main Window")
         self._undockButton.clicked.connect(self._onUndockButtonClick)
@@ -97,8 +101,10 @@ class DockEstimates(QWidget):
         """
         super().__init__()
 
-        self.dockedWidget = DockedWidget(self._onUndock, self._onLegendToggleInDockedWidget)
-        self._undockedWidget = UndockedWidget(self._onDock, self._onLegendToggleInUndockedWidget)
+        self.dockedWidget = DockedWidget(self._onUndock, self._onLegendToggleInDockedWidget,
+                                         self._onPanelToggleInDockedWidget)
+        self._undockedWidget = UndockedWidget(self._onDock, self._onLegendToggleInUndockedWidget,
+                                              self._onPanelToggleInUndockedWidget)
         self._lastTimeStepRequested = -1
 
         self.dock()
@@ -138,3 +144,9 @@ class DockEstimates(QWidget):
 
     def _onLegendToggleInUndockedWidget(self, legendIndex: int, timeSeriesIndex: int, groupIndex: int):
         self.dockedWidget.estimatesWidget.toggleLegend(legendIndex, timeSeriesIndex, groupIndex)
+
+    def _onPanelToggleInDockedWidget(self, panelIndex: int):
+        self._undockedWidget.estimatesWidget.togglePanel(panelIndex)
+
+    def _onPanelToggleInUndockedWidget(self, panelIndex: int):
+        self.dockedWidget.estimatesWidget.togglePanel(panelIndex)

@@ -2,6 +2,7 @@
 Based on code from https://stackoverflow.com/questions/52615115/how-to-create-collapsible-box-in-pyqt
 """
 
+from typing import Any, Callable
 from PyQt5.QtWidgets import QWidget, QToolButton, QScrollArea, QSizePolicy, QFrame
 from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSlot
@@ -9,11 +10,13 @@ from PyQt5.QtCore import QParallelAnimationGroup, QPropertyAnimation, QAbstractA
 
 
 class CollapsiblePanel(QWidget):
-    def __init__(self, title="", parent=None):
+    def __init__(self, title: str, panelIndex: int, parent: Any = None):
         super(CollapsiblePanel, self).__init__(parent)
 
+        self._panelIndex = panelIndex
         self._hasCentralWidget = False
         self._finished = True
+        self._toggleCallback = None
 
         self.toggleButton = QToolButton(text=title, checkable=True, checked=False)
         self.toggleButton.setStyleSheet("QToolButton { border: none; }")
@@ -21,7 +24,7 @@ class CollapsiblePanel(QWidget):
             Qt.ToolButtonTextBesideIcon
         )
         self.toggleButton.setArrowType(Qt.RightArrow)
-        self.toggleButton.pressed.connect(self.onPressed)
+        self.toggleButton.pressed.connect(self._onPressed)
 
         self.contentArea = QScrollArea()
         self.contentArea.setMinimumHeight(0)
@@ -49,41 +52,8 @@ class CollapsiblePanel(QWidget):
         )
         self.toggleAnimation.finished.connect(self._animationFinished)
 
-    def clearContent(self):
-        if self._hasCentralWidget:
-            currentWidget: QWidget = self.contentArea.layout().takeAt(0).widget()
-            currentWidget.deleteLater()
-
-            self.toggleButton.setArrowType(Qt.RightArrow)
-            self.toggleButton.setChecked(False)
-
-            for i in range(self.toggleAnimation.animationCount()):
-                animation = self.toggleAnimation.animationAt(i)
-                animation.setDuration(0)
-            self.toggleAnimation.setDirection(QAbstractAnimation.Backward)
-            self._finished = False
-            self.toggleAnimation.start()
-            while not self._finished:
-                # Wait until collapse finishes
-                pass
-
-    @pyqtSlot()
-    def onPressed(self):
-        if self._hasCentralWidget:
-            checked = self.toggleButton.isChecked()
-            self.toggleButton.setArrowType(
-                Qt.DownArrow if not checked else Qt.RightArrow
-            )
-            self.toggleAnimation.setDirection(
-                QAbstractAnimation.Forward
-                if not checked
-                else QAbstractAnimation.Backward
-            )
-            self._finished = False
-            self.toggleAnimation.start()
-
     def setCentralWidget(self, widget):
-        self.clearContent()
+        self._clearContent()
 
         self._hasCentralWidget = True
         self._contentAreaLayout.addWidget(widget)
@@ -105,6 +75,47 @@ class CollapsiblePanel(QWidget):
         content_animation.setDuration(500)
         content_animation.setStartValue(0)
         content_animation.setEndValue(content_height)
+
+    def toggle(self):
+        self._onPressed(False)
+
+    def setToggleCallback(self, callback: Callable):
+        self._toggleCallback = callback
+
+    def _clearContent(self):
+        if self._hasCentralWidget:
+            currentWidget: QWidget = self.contentArea.layout().takeAt(0).widget()
+            currentWidget.deleteLater()
+
+            self.toggleButton.setArrowType(Qt.RightArrow)
+            self.toggleButton.setChecked(False)
+
+            for i in range(self.toggleAnimation.animationCount()):
+                animation = self.toggleAnimation.animationAt(i)
+                animation.setDuration(0)
+            self.toggleAnimation.setDirection(QAbstractAnimation.Backward)
+            self._finished = False
+            self.toggleAnimation.start()
+            while not self._finished:
+                # Wait until collapse finishes
+                pass
+
+    def _onPressed(self, invokeCallback: bool = True):
+        if self._hasCentralWidget:
+            checked = self.toggleButton.isChecked()
+            self.toggleButton.setArrowType(
+                Qt.DownArrow if not checked else Qt.RightArrow
+            )
+            self.toggleAnimation.setDirection(
+                QAbstractAnimation.Forward
+                if not checked
+                else QAbstractAnimation.Backward
+            )
+            self._finished = False
+            self.toggleAnimation.start()
+
+            if invokeCallback and self._toggleCallback is not None:
+                self._toggleCallback(self._panelIndex)
 
     def _animationFinished(self):
         self._finished = True
