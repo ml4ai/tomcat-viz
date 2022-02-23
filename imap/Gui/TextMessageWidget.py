@@ -40,7 +40,7 @@ class TextMessageWidget(QTextEdit):
         self._lastDrawnTimeStep = timeStep
 
         self.setHtml(self._getHtmlContent())
-        self.update()
+        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
     def loadTrial(self, trial: Trial):
         self._trial = trial

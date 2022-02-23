@@ -120,10 +120,12 @@ class HeaderWidget(QWidget):
         trialInfoLayout.addLayout(teamNumberFormLayout, 40)
 
         playerInfoLayout = QHBoxLayout()
-        playerInfoLayout.addWidget(self._redPanel)
-        playerInfoLayout.addWidget(self._greenPanel)
-        playerInfoLayout.addWidget(self._bluePanel)
         playerInfoLayout.setContentsMargins(0, 0, 0, 0)
+        playerInfoLayout.addWidget(self._redPanel)
+        playerInfoLayout.addWidget(createVerticalSeparator())
+        playerInfoLayout.addWidget(self._greenPanel)
+        playerInfoLayout.addWidget(createVerticalSeparator())
+        playerInfoLayout.addWidget(self._bluePanel)
 
         layout = QVBoxLayout()
         layout.addLayout(trialInfoLayout, 10)
