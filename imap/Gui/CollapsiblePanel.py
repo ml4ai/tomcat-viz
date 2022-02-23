@@ -81,6 +81,7 @@ class CollapsiblePanel(QWidget):
 
     def toggle(self):
         self._onPressed(False)
+        self.toggleButton.setChecked(not self.toggleButton.isChecked())
 
     def setToggleCallback(self, callback: Callable):
         self._toggleCallback = callback

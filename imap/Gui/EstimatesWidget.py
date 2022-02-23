@@ -22,6 +22,7 @@ class EstimatesWidget(QWidget):
 
         self._multiPlotWidgets = []
         self._legendToggleCallback = None
+        self._searchChangeCallback = None
 
         self._panels = [
             CollapsiblePanel("Red Player", 0),
@@ -59,6 +60,7 @@ class EstimatesWidget(QWidget):
         for i, playerSeries in enumerate(estimates.playerSeries):
             multiPlotWidget = MultiTimeSeriesPlotWidget(playerSeries, i, self._num_visible_time_steps)
             multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
+            multiPlotWidget.setSearchChangeCallback(self._searchChangeCallback)
             self._multiPlotWidgets.append(multiPlotWidget)
             self._panels[i].setCentralWidget(multiPlotWidget)
 
@@ -66,6 +68,7 @@ class EstimatesWidget(QWidget):
         multiPlotWidget = MultiTimeSeriesPlotWidget(estimates.teamSeries, len(estimates.playerSeries),
                                                     self._num_visible_time_steps)
         multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
+        multiPlotWidget.setSearchChangeCallback(self._searchChangeCallback)
         self._multiPlotWidgets.append(multiPlotWidget)
         self._panels[-1].setCentralWidget(multiPlotWidget)
 
@@ -81,3 +84,9 @@ class EstimatesWidget(QWidget):
 
     def togglePanel(self, panelIndex: int):
         self._panels[panelIndex].toggle()
+
+    def setSearchChangeCallback(self, callback: Callable):
+        self._searchChangeCallback = callback
+
+    def filterPlots(self, groupIndex: int, searchQuery: str):
+        self._multiPlotWidgets[groupIndex].filterPlots(searchQuery)

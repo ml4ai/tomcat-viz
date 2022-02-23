@@ -43,6 +43,7 @@ class Constants:
         INCONSISTENCY = "#FA8B03"
         DOOR = "#000000"
         APP_BACKGROUND = "#E8E0E7"
+        SEARCH_FIELD_BACKGROUND = "#FF7DAF"
 
     # TODO - remove?
     class BlockType(Enum):

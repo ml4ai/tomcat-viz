@@ -1,8 +1,9 @@
 from typing import Callable, Dict, List
 from pyqtgraph import PlotWidget, mkPen, mkColor, mkBrush
-from PyQt5.Qt import Qt, QSize, QColor
+from PyQt5.Qt import Qt, QSize, QColor, QMimeData, QPixmap
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtGui import QDrag
 
 from imap.Common.Constants import Constants
 from imap.Common.Format import secondsToTime
@@ -10,7 +11,7 @@ from imap.Parser.Estimates import TimeSeries
 from imap.Gui.PlotLegendWidget import PlotLegendWidget
 
 
-class TimeSeriesPlotWidget(QWidget):    
+class TimeSeriesPlotWidget(QWidget):
     MARKER_SIZE = 5
     COLOR_PALETTE = [
         "#105ca4",
@@ -112,6 +113,17 @@ class TimeSeriesPlotWidget(QWidget):
                 self._plotWidget.plot([], [], pen=pen, brush=brush, symbol='s',
                                       symbolSize=TimeSeriesPlotWidget.MARKER_SIZE,
                                       symbolPen=pen, symbolBrush=brush))
+
+        # self._plotWidget.scene().sigMouseClicked.connect(self._onClick)
+
+    # def _onClick(self, event):
+    #     if self._plotWidget.sceneBoundingRect().contains(event._scenePos):
+    #         mousePoint = self._plotWidget.plotItem.vb.mapSceneToView(event._scenePos)
+    #         dataIndex = int(mousePoint.x())
+    #         # if index > 0 and index < self._num_visible_time_steps:
+    #             # label.setText(
+    #             #     "<span style='font-size: 12pt'>x=%0.1f,   <span style='color: red'>y1=%0.1f</span>,   <span style='color: green'>y2=%0.1f</span>" % (
+    #             #         mousePoint.x(), data1[index], data2[index]))
 
     def _adjustTickLabels(self):
         ax = self._plotWidget.getAxis('bottom')

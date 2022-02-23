@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton, QSplitter
 from PyQt5.Qt import Qt, QFont, QMenu, QAction
+from PyQt5.QtWidgets import QApplication
 
 from imap.Gui.Utils import createLabel
 from imap.Gui.TextMessageWidget import TextMessageWidget
