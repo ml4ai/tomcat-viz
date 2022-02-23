@@ -221,6 +221,7 @@ class Trial:
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
         currentPlayersActions = [Constants.Action.NONE for _ in range(Constants.NUM_ROLES)]
         currentRubbleCounts = {}
+        collapsedRubbleCounts: Set[Position] = set()
         currentActiveBlackout = False
         currentSavedVictims = set()
         currentPickedUpVictims = set()
@@ -242,7 +243,7 @@ class Trial:
                 self.metadata["player_ids"] = [playerId.strip() for playerId in message["data"]["subjects"]]
                 for info in message["data"]["client_info"]:
                     playerColor = info["callsign"].lower()
-                    playerId = info["unique_id"]
+                    playerId = info["participant_id"]
                     playerIdToColor[playerId] = playerColor
                     if playerColor == "red":
                         self.metadata["red_id"] = playerId
@@ -397,6 +398,8 @@ class Trial:
                     else:
                         currentRubbleCounts[position] = -1
 
+                    collapsedRubbleCounts.discard(position)
+
                 elif Trial._isMessageOf(message, "event", "Event:Perturbation"):
                     if message["data"]["type"].lower() == "blackout":
                         currentActiveBlackout = message["data"]["state"].lower() == "start"
@@ -408,10 +411,9 @@ class Trial:
                     for x in range(message["data"]["fromBlock_x"], message["data"]["toBlock_x"] + 1):
                         for y in range(message["data"]["fromBlock_z"], message["data"]["toBlock_z"] + 1):
                             position = Position(x - self.map.metadata["min_x"], y - self.map.metadata["min_y"])
-                            if position in currentRubbleCounts:
-                                currentRubbleCounts[position] += counts
-                            else:
+                            if position not in collapsedRubbleCounts:
                                 currentRubbleCounts[position] = counts
+                                collapsedRubbleCounts.add(position)
 
                 elif Trial._isMessageOf(message, "observation", "State"):
                     # Collect observations for the current time step

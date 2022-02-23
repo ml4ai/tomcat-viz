@@ -49,6 +49,7 @@ class TimeSliderWidget(QWidget):
 
     def _configureLayout(self):
         layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._rewindButton)
         layout.addWidget(self._forwardButton)
         layout.addWidget(self._timeSlider)
