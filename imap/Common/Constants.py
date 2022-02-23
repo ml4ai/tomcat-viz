@@ -88,7 +88,8 @@ class Constants:
         TINY_REGULAR = QFont("Inconsolata", 11)
         SMALL_BOLD = QFont("Inconsolata", 14, QFont.Bold)
         SMALL_REGULAR = QFont("Inconsolata", 14)
-        LARGE_BOLD = QFont("Inconsolata", 70, QFont.Bold)
+        LARGE_BOLD = QFont("Inconsolata", 50, QFont.Bold)
+        HUGE_BOLD = QFont("Inconsolata", 70, QFont.Bold)
 
     MARKER_TYPE_MAP = {
         MarkerType.NO_VICTIM: "O",

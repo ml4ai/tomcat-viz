@@ -23,7 +23,7 @@ class HeaderWidget(QWidget):
         # Central info
         self._trialLabel = createLabel("T00000", Constants.Font.SMALL_REGULAR.value, "gray")
         self._teamLabel = createLabel("TM00000", Constants.Font.SMALL_REGULAR.value, "gray")
-        self._scoreLabel = createLabel("0", Constants.Font.LARGE_BOLD.value, alignment=Qt.AlignCenter)
+        self._scoreLabel = createLabel("0", Constants.Font.HUGE_BOLD.value, alignment=Qt.AlignCenter)
 
         # Player panels
         self._redPanel = PlayerPanelWidget(Constants.Colors.RED_PLAYER.value)

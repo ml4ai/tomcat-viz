@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtCore import QParallelAnimationGroup, QPropertyAnimation, QAbstractAnimation
 
+from imap.Common.Constants import Constants
+
 
 class CollapsiblePanel(QWidget):
     def __init__(self, title: str, panelIndex: int, parent: Any = None):
@@ -19,6 +21,7 @@ class CollapsiblePanel(QWidget):
         self._toggleCallback = None
 
         self.toggleButton = QToolButton(text=title, checkable=True, checked=False)
+        self.toggleButton.setFont(Constants.Font.SMALL_REGULAR.value)
         self.toggleButton.setStyleSheet("QToolButton { border: none; }")
         self.toggleButton.setToolButtonStyle(
             Qt.ToolButtonTextBesideIcon

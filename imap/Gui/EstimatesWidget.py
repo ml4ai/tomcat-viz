@@ -10,8 +10,10 @@ from imap.Gui.Utils import createHorizontalSeparator, createVerticalSeparator
 
 class EstimatesWidget(QWidget):
 
-    def __init__(self, verticalStacking: bool = True):
+    def __init__(self, verticalStacking: bool = True, num_visible_time_steps: int = 5):
         super().__init__()
+
+        self._num_visible_time_steps = num_visible_time_steps
 
         palette = QPalette()
         palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
@@ -55,13 +57,14 @@ class EstimatesWidget(QWidget):
 
         # Player plots
         for i, playerSeries in enumerate(estimates.playerSeries):
-            multiPlotWidget = MultiTimeSeriesPlotWidget(playerSeries, i)
+            multiPlotWidget = MultiTimeSeriesPlotWidget(playerSeries, i, self._num_visible_time_steps)
             multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
             self._multiPlotWidgets.append(multiPlotWidget)
             self._panels[i].setCentralWidget(multiPlotWidget)
 
         # Team plots
-        multiPlotWidget = MultiTimeSeriesPlotWidget(estimates.teamSeries, len(estimates.playerSeries))
+        multiPlotWidget = MultiTimeSeriesPlotWidget(estimates.teamSeries, len(estimates.playerSeries),
+                                                    self._num_visible_time_steps)
         multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
         self._multiPlotWidgets.append(multiPlotWidget)
         self._panels[-1].setCentralWidget(multiPlotWidget)

@@ -10,8 +10,7 @@ from imap.Parser.Estimates import TimeSeries
 from imap.Gui.PlotLegendWidget import PlotLegendWidget
 
 
-class TimeSeriesPlotWidget(QWidget):
-    NUM_VISIBLE_TIME_STEPS = 5
+class TimeSeriesPlotWidget(QWidget):    
     MARKER_SIZE = 5
     COLOR_PALETTE = [
         "#105ca4",
@@ -21,13 +20,14 @@ class TimeSeriesPlotWidget(QWidget):
         "#855b98",
     ]
 
-    def __init__(self, series: TimeSeries, timeSeriesIndex: int):
+    def __init__(self, series: TimeSeries, timeSeriesIndex: int, num_visible_time_steps: int = 5):
         super().__init__()
 
         self._series = series
         self._times = list(range(series.size))
         self._lastRequestedTimeStep = -1
         self._timeSeriesIndex = timeSeriesIndex
+        self._num_visible_time_steps = num_visible_time_steps
         self._legendToggleCallback = None
 
         self._createWidgets()
@@ -43,12 +43,12 @@ class TimeSeriesPlotWidget(QWidget):
 
             for i, plot in enumerate(self._dataItems):
                 if self._legendWidgets[i].enabled:
-                    if timeStep <= TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:
+                    if timeStep <= self._num_visible_time_steps:
                         x = self._times[:timeStep]
                         y = self._series.values[i][:timeStep]
                     else:
-                        x = self._times[timeStep - TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:timeStep]
-                        y = self._series.values[i][timeStep - TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:timeStep]
+                        x = self._times[timeStep - self._num_visible_time_steps:timeStep]
+                        y = self._series.values[i][timeStep - self._num_visible_time_steps:timeStep]
 
                     plot.setData(x, y)
                 else:
@@ -116,12 +116,15 @@ class TimeSeriesPlotWidget(QWidget):
     def _adjustTickLabels(self):
         ax = self._plotWidget.getAxis('bottom')
         ax.setTicks([[(v, secondsToTime(v)) for v in self._times]])
+        ax.setTickFont(Constants.Font.SMALL_REGULAR.value)
+        ay = self._plotWidget.getAxis('left')
+        ay.setTickFont(Constants.Font.SMALL_REGULAR.value)
 
     def _plotBaseline(self, timeStep: int):
-        if timeStep <= TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:
+        if timeStep <= self._num_visible_time_steps:
             x = self._times[:timeStep]
         else:
-            x = self._times[timeStep - TimeSeriesPlotWidget.NUM_VISIBLE_TIME_STEPS:timeStep]
+            x = self._times[timeStep - self._num_visible_time_steps:timeStep]
 
         self._baselineDataItem.setData(x, [0.5] * len(x))
 

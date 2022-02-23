@@ -10,7 +10,7 @@ from imap.Gui.Utils import createHorizontalSeparator
 
 class MultiTimeSeriesPlotWidget(QWidget):
 
-    def __init__(self, timeSeries: List[TimeSeries], groupIndex: int):
+    def __init__(self, timeSeries: List[TimeSeries], groupIndex: int, num_visible_time_steps: int = 5):
         super().__init__()
 
         self._plotWidgets = []
@@ -20,7 +20,7 @@ class MultiTimeSeriesPlotWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         for i, series in enumerate(timeSeries):
-            plotWidget = TimeSeriesPlotWidget(series, i)
+            plotWidget = TimeSeriesPlotWidget(series, i, num_visible_time_steps)
             plotWidget.setLegendToggleCallback(self._onLegendToggle)
             self._plotWidgets.append(plotWidget)
             layout.addWidget(plotWidget)
