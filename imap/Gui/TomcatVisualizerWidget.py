@@ -148,6 +148,9 @@ class TomcatVisualizerWidget(QWidget):
         self._headerPanel.setRedPlayerName(self._trial.metadata["red_id"])
         self._headerPanel.setGreenPlayerName(self._trial.metadata["green_id"])
         self._headerPanel.setBluePlayerName(self._trial.metadata["blue_id"])
+        self._headerPanel.setRedPlayerRole(self._trial.metadata["red_role"])
+        self._headerPanel.setGreenPlayerRole(self._trial.metadata["green_role"])
+        self._headerPanel.setBluePlayerRole(self._trial.metadata["blue_role"])
         self._updateHeaderInfo(0)
 
     def _loadDefaultMap(self):

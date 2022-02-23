@@ -21,8 +21,8 @@ class HeaderWidget(QWidget):
         self._legendPanel = LegendWidget()
 
         # Central info
-        self._trialLabel = createLabel("...", Constants.Font.SMALL_REGULAR.value, "gray")
-        self._teamLabel = createLabel("...", Constants.Font.SMALL_REGULAR.value, "gray")
+        self._trialLabel = createLabel("T00000", Constants.Font.SMALL_REGULAR.value, "gray")
+        self._teamLabel = createLabel("TM00000", Constants.Font.SMALL_REGULAR.value, "gray")
         self._scoreLabel = createLabel("0", Constants.Font.LARGE_BOLD.value, alignment=Qt.AlignCenter)
 
         # Player panels
@@ -44,6 +44,15 @@ class HeaderWidget(QWidget):
 
     def setBluePlayerName(self, name: str):
         self._bluePanel.setName(name)
+
+    def setRedPlayerRole(self, role: Constants.Role):
+        self._redPanel.setRole(role)
+
+    def setGreenPlayerRole(self, role: Constants.Role):
+        self._greenPanel.setRole(role)
+
+    def setBluePlayerRole(self, role: Constants.Role):
+        self._bluePanel.setRole(role)
 
     def setRedPlayerAction(self, action: Constants.Action):
         self._redPanel.setAction(action)
@@ -103,10 +112,12 @@ class HeaderWidget(QWidget):
         teamNumberFormLayout.setFormAlignment(Qt.AlignLeft)
         teamNumberFormLayout.setLabelAlignment(Qt.AlignLeft)
         teamNumberFormLayout.setContentsMargins(10, 0, 0, 0)
+
         trialInfoLayout = QHBoxLayout()
-        trialInfoLayout.addLayout(trialNumberFormLayout)
-        trialInfoLayout.addWidget(createVerticalSeparator())
-        trialInfoLayout.addLayout(teamNumberFormLayout)
+        trialInfoLayout.addLayout(trialNumberFormLayout, 40)
+        trialInfoLayout.addWidget(createLabel("<html><head/><body><p>&#9670;</p></body></html>",
+                                              Constants.Font.SMALL_REGULAR.value, "black", Qt.AlignHCenter))
+        trialInfoLayout.addLayout(teamNumberFormLayout, 40)
 
         playerInfoLayout = QHBoxLayout()
         playerInfoLayout.addWidget(self._redPanel)
@@ -116,7 +127,7 @@ class HeaderWidget(QWidget):
 
         layout = QVBoxLayout()
         layout.addLayout(trialInfoLayout, 10)
-        layout.addWidget(self._scoreLabel, 30)
-        layout.addLayout(playerInfoLayout, 60)
+        layout.addWidget(self._scoreLabel, 60)
+        layout.addLayout(playerInfoLayout, 40)
 
         return layout

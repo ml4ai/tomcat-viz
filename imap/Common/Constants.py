@@ -7,6 +7,11 @@ class Constants:
 
     NUM_ROLES = 3
 
+    class Role(Enum):
+        MEDIC = 0
+        ENGINEER = 1
+        TRANSPORTER = 2
+
     class Player(Enum):
         RED = 0
         GREEN = 1
@@ -83,7 +88,7 @@ class Constants:
         TINY_REGULAR = QFont("Inconsolata", 11)
         SMALL_BOLD = QFont("Inconsolata", 14, QFont.Bold)
         SMALL_REGULAR = QFont("Inconsolata", 14)
-        LARGE_BOLD = QFont("Inconsolata", 40, QFont.Bold)
+        LARGE_BOLD = QFont("Inconsolata", 70, QFont.Bold)
 
     MARKER_TYPE_MAP = {
         MarkerType.NO_VICTIM: "O",

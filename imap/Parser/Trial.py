@@ -254,7 +254,7 @@ class Trial:
                 # Trial finished. Nothing else to parse.
                 break
             elif Trial._isMessageOf(message, "event", "Event:RoleSelected"):
-                role = message["data"]["new_role"].lower()
+                role = Trial._getRoleFromStringType(message["data"]["new_role"].lower())
                 playerId = message["data"]["participant_id"]
                 playerColor = playerIdToColor[playerId]
 
@@ -478,6 +478,18 @@ class Trial:
     def _isMessageOf(message: json, type: str, subType: str):
         return message["header"]["message_type"].lower() == type.lower() and message["msg"][
             "sub_type"].lower() == subType.lower()
+
+    @staticmethod
+    def _getRoleFromStringType(stringType: str) -> Constants.MarkerType:
+        role = None
+        if "transport" in stringType:
+            role = Constants.Role.TRANSPORTER
+        elif "engineering" in stringType:
+            role = Constants.Role.ENGINEER
+        elif "medical" in stringType:
+            role = Constants.Role.MEDIC
+
+        return role
 
     @staticmethod
     def _getMarkerTypeFromStringType(stringType: str) -> Constants.MarkerType:
