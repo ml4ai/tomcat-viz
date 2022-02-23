@@ -210,15 +210,15 @@ class MapWidget(QWidget):
 
     def _createPlayerItemsAt(self, timeStep: int) -> List[QGraphicsItem]:
         items = [
-            self._scene.drawRed(self._trial.playersPositions[Constants.Player.RED.value][timeStep][0],
-                                self._trial.playersPositions[Constants.Player.RED.value][timeStep][1], self._blockSize,
+            self._scene.drawRed(self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].x,
+                                self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].y, self._blockSize,
                                 self._playerSize),
-            self._scene.drawGreen(self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][0],
-                                  self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][1],
+            self._scene.drawGreen(self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].x,
+                                  self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].y,
                                   self._blockSize,
                                   self._playerSize),
-            self._scene.drawBlue(self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][0],
-                                 self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][1],
+            self._scene.drawBlue(self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].x,
+                                 self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].y,
                                  self._blockSize,
                                  self._playerSize)
         ]
@@ -229,18 +229,18 @@ class MapWidget(QWidget):
         # Initialize trajectories
         redPen = QPen(Qt.red, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         redPath = QPainterPath()
-        redPath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.RED.value][0][0] + 0.5),
-                       self._blockSize * (self._trial.playersPositions[Constants.Player.RED.value][0][1] + 0.5))
+        redPath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.RED.value][0][0].x + 0.5),
+                       self._blockSize * (self._trial.playersPositions[Constants.Player.RED.value][0][0].y + 0.5))
 
         greenPen = QPen(Qt.green, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         greenPath = QPainterPath()
-        greenPath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.GREEN.value][0][0] + 0.5),
-                         self._blockSize * (self._trial.playersPositions[Constants.Player.GREEN.value][0][1] + 0.5))
+        greenPath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.GREEN.value][0][0].x + 0.5),
+                         self._blockSize * (self._trial.playersPositions[Constants.Player.GREEN.value][0][0].y + 0.5))
 
         bluePen = QPen(Qt.blue, 1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
         bluePath = QPainterPath()
-        bluePath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.BLUE.value][0][0] + 0.5),
-                        self._blockSize * (self._trial.playersPositions[Constants.Player.BLUE.value][0][1] + 0.5))
+        bluePath.moveTo(self._blockSize * (self._trial.playersPositions[Constants.Player.BLUE.value][0][0].x + 0.5),
+                        self._blockSize * (self._trial.playersPositions[Constants.Player.BLUE.value][0][0].y + 0.5))
 
         self._playersPathItems = [
             self._scene.addPath(redPath, redPen),
@@ -249,17 +249,6 @@ class MapWidget(QWidget):
         ]
 
         self._playersPaths = [[redPath, greenPath, bluePath]]
-
-    # def _translatePosition(self, x: int, y: int) -> Tuple[int, int]:
-    #     return x - self._map.metadata["min_x"], y - self._map.metadata["min_y"]
-
-    # def _getPlayersPositionsAt(self, time_step: int) -> List[Tuple[float, float]]:
-    #     positions = []
-    #     for positionPerPlayer in self._trial.playersPositions:
-    #         position = positionPerPlayer[time_step]
-    #         positions.append(position[0], position[1])
-    #
-    #     return positions
 
     def _drawTrajectoriesAt(self, timeStep: int, forward: bool):
         if forward:
@@ -280,11 +269,12 @@ class MapWidget(QWidget):
 
     def _createPathTo(self, timeStep: int):
         paths = []
-        for i, position in enumerate(self._trial.playersPositions):
-            # Extend previous path
+        for i, timedPositions in enumerate(self._trial.playersPositions):
             path = QPainterPath(self._playersPaths[timeStep - 1][i])
-            path.lineTo(self._blockSize * (position[timeStep][0] + 0.5),
-                        self._blockSize * (position[timeStep][1] + 0.5))
+            for position in timedPositions[timeStep]:
+                # Extend previous path
+                path.lineTo(self._blockSize * (position.x + 0.5),
+                            self._blockSize * (position.y + 0.5))
             paths.append(path)
 
         return paths

@@ -144,7 +144,7 @@ class Trial:
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
-        self.playersPositions: List[np.ndarray] = []
+        self.playersPositions: List[List[List[Position]]] = []
         self.chatMessages: List[List[Set[ChatMessage]]] = []
         self.playersActions: List[List[Constants.Action]] = []
         self.playersEquippedItems: List[List[Constants.EquippedItem]] = []
@@ -205,7 +205,7 @@ class Trial:
         self.placedMarkers = []
         self.removedMarkers = []
         self.rubbleCounts = []
-        self.playersPositions = [np.zeros((self.timeSteps, 2)) for _ in range(Constants.NUM_ROLES)]
+        self.playersPositions = [[] for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
         self.activeBlackout = []
@@ -215,7 +215,7 @@ class Trial:
         # These variables contain valid values per time step.
         # Some will have their value reset in the end of a time step.
         currentScore = 0
-        currentPlayersPositions = [np.zeros(2) for _ in range(Constants.NUM_ROLES)]
+        currentPlayersPositions: List[List[Position]] = [[] for _ in range(Constants.NUM_ROLES)]
         currentPlacedMarkers = set()
         currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
@@ -269,7 +269,15 @@ class Trial:
                 playerColor = playerIdToColor[playerId]
                 x = message["data"]["x"] - self.map.metadata["min_x"]
                 y = message["data"]["z"] - self.map.metadata["min_y"]
-                currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value] = np.array([x, y])
+                position = Position(x, y)
+
+                if len(currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value]) > 0:
+                    if currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value][-1] != position:
+                        # Only add the new position if the player moved
+                        currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value].append(position)
+                else:
+                    currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value].append(position)
+
             elif Trial._isMessageOf(message, "event", "Event:ItemEquipped"):
                 playerId = message["data"]["participant_id"]
                 playerColor = playerIdToColor[playerId]
@@ -416,7 +424,11 @@ class Trial:
                             self.placedMarkers.append(currentPlacedMarkers.copy())
                             self.removedMarkers.append(currentRemovedMarkers.copy())
                             for playerIdx, positions in enumerate(self.playersPositions):
-                                positions[t] = currentPlayersPositions[playerIdx]
+                                if len(currentPlayersPositions[playerIdx]) == 0:
+                                    positions.append([self.playersPositions[playerIdx][-1][-1]])
+                                else:
+                                    positions.append(currentPlayersPositions[playerIdx].copy())
+                                currentPlayersPositions[playerIdx].clear()
                             for playerIdx, messages in enumerate(self.chatMessages):
                                 messages.append(currentChatMessages[playerIdx].copy())
                                 currentChatMessages[playerIdx].clear()
