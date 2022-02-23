@@ -9,16 +9,16 @@ from imap.Gui.Utils import createLabel, createEmptyWidget
 class PlotLegendWidget(QWidget):
     MARKER_SIZE = 10
 
-    def __init__(self, label: str, color: str, index: int):
+    def __init__(self, label: str, color: str, legendIndex: int):
         super().__init__()
 
         self._label = label
         self._color = color
-        self._index = index
+        self._legendIndex = legendIndex
         self._toggleCallback = None
 
         self.enabled = True
-        self.mousePressEvent = self._toggleLegend
+        self.mousePressEvent = self.toggleLegend
 
         self._createWidgets()
         self._configureLayout()
@@ -26,19 +26,7 @@ class PlotLegendWidget(QWidget):
     def setToggleCalback(self, callback: Callable):
         self._toggleCallback = callback
 
-    def _createWidgets(self):
-        self._markerWidget = createEmptyWidget(self._color,
-                                               QSize(PlotLegendWidget.MARKER_SIZE, PlotLegendWidget.MARKER_SIZE))
-        self._legendLabel = createLabel(self._label, Constants.Font.SMALL_REGULAR.value, self._color, Qt.AlignLeft)
-        self._legendLabel.adjustSize()
-
-    def _configureLayout(self):
-        mainLayout = QHBoxLayout(self)
-        mainLayout.setContentsMargins(0, 0, 0, 0)
-        mainLayout.addWidget(self._markerWidget)
-        mainLayout.addWidget(self._legendLabel)
-
-    def _toggleLegend(self, event: Any):
+    def toggleLegend(self, event: Any = None):
         self.enabled = not self.enabled
         opacity_effect = QGraphicsOpacityEffect()
         if self.enabled:
@@ -52,6 +40,19 @@ class PlotLegendWidget(QWidget):
 
         self.setGraphicsEffect(opacity_effect)
 
-        if self._toggleCallback is not None:
-            self._toggleCallback(self._index)
+        if event is not None and self._toggleCallback is not None:
+            # Clicking a button will trigger a callback so that the same event can be replicated in another component
+            # that also presents the same set of plots
+            self._toggleCallback(self._legendIndex)
 
+    def _createWidgets(self):
+        self._markerWidget = createEmptyWidget(self._color,
+                                               QSize(PlotLegendWidget.MARKER_SIZE, PlotLegendWidget.MARKER_SIZE))
+        self._legendLabel = createLabel(self._label, Constants.Font.SMALL_REGULAR.value, self._color, Qt.AlignLeft)
+        self._legendLabel.adjustSize()
+
+    def _configureLayout(self):
+        mainLayout = QHBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.addWidget(self._markerWidget)
+        mainLayout.addWidget(self._legendLabel)

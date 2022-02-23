@@ -9,10 +9,11 @@ from imap.Common.Constants import Constants
 
 class UndockedWidget(QWidget):
 
-    def __init__(self, dockCallback: Callable):
+    def __init__(self, dockCallback: Callable, legendToggleCallback: Callable):
         super().__init__()
 
         self._dockCallback = dockCallback
+        self._legendToggleCallback = legendToggleCallback
 
         palette = QPalette()
         palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
@@ -26,6 +27,7 @@ class UndockedWidget(QWidget):
 
     def _createWidgets(self):
         self.estimatesWidget = EstimatesWidget(False)
+        self.estimatesWidget.setLegendToggleCallback(self._legendToggleCallback)
 
         self._dockButton = QPushButton("Attach to Main Window")
         self._dockButton.clicked.connect(self._onDockButtonClick)
@@ -50,10 +52,11 @@ class UndockedWidget(QWidget):
 
 class DockedWidget(QWidget):
 
-    def __init__(self, undockCallback: Callable):
+    def __init__(self, undockCallback: Callable, legendToggleCallback: Callable):
         super().__init__()
 
         self._undockCallback = undockCallback
+        self._legendToggleCallback = legendToggleCallback
 
         palette = QPalette()
         palette.setColor(QPalette.Active, QPalette.Window, QColor("white"))
@@ -65,6 +68,7 @@ class DockedWidget(QWidget):
 
     def _createWidgets(self):
         self.estimatesWidget = EstimatesWidget()
+        self.estimatesWidget.setLegendToggleCallback(self._legendToggleCallback)
 
         self._undockButton = QPushButton("Detach from Main Window")
         self._undockButton.clicked.connect(self._onUndockButtonClick)
@@ -93,8 +97,8 @@ class DockEstimates(QWidget):
         """
         super().__init__()
 
-        self.dockedWidget = DockedWidget(self._onUndock)
-        self._undockedWidget = UndockedWidget(self._onDock)
+        self.dockedWidget = DockedWidget(self._onUndock, self._onLegendToggleInDockedWidget)
+        self._undockedWidget = UndockedWidget(self._onDock, self._onLegendToggleInUndockedWidget)
         self._lastTimeStepRequested = -1
 
         self.dock()
@@ -128,3 +132,9 @@ class DockEstimates(QWidget):
         self.dockedWidget.setVisible(False)
         self._undockedWidget.setVisible(True)
         self.updateFor(self._lastTimeStepRequested)
+
+    def _onLegendToggleInDockedWidget(self, legendIndex: int, timeSeriesIndex: int, groupIndex: int):
+        self._undockedWidget.estimatesWidget.toggleLegend(legendIndex, timeSeriesIndex, groupIndex)
+
+    def _onLegendToggleInUndockedWidget(self, legendIndex: int, timeSeriesIndex: int, groupIndex: int):
+        self.dockedWidget.estimatesWidget.toggleLegend(legendIndex, timeSeriesIndex, groupIndex)

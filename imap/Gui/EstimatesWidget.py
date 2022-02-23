@@ -1,3 +1,4 @@
+from typing import Callable
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.Qt import QPalette, QColor, Qt
 
@@ -18,6 +19,7 @@ class EstimatesWidget(QWidget):
         self.setPalette(palette)
 
         self._multiPlotWidgets = []
+        self._legendToggleCallback = None
 
         self._panels = [
             CollapsiblePanel("Red Player"),
@@ -53,11 +55,19 @@ class EstimatesWidget(QWidget):
 
         # Player plots
         for i, playerSeries in enumerate(estimates.playerSeries):
-            multiPlotWidget = MultiTimeSeriesPlotWidget(playerSeries)
+            multiPlotWidget = MultiTimeSeriesPlotWidget(playerSeries, i)
+            multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
             self._multiPlotWidgets.append(multiPlotWidget)
             self._panels[i].setCentralWidget(multiPlotWidget)
 
         # Team plots
-        multiPlotWidget = MultiTimeSeriesPlotWidget(estimates.teamSeries)
+        multiPlotWidget = MultiTimeSeriesPlotWidget(estimates.teamSeries, len(estimates.playerSeries))
+        multiPlotWidget.setLegendToggleCallback(self._legendToggleCallback)
         self._multiPlotWidgets.append(multiPlotWidget)
         self._panels[-1].setCentralWidget(multiPlotWidget)
+
+    def setLegendToggleCallback(self, callback: Callable):
+        self._legendToggleCallback = callback
+
+    def toggleLegend(self, legendIndex: int, timeSeriesIndex: int, groupIndex: int):
+        self._multiPlotWidgets[groupIndex].toggleLegend(legendIndex, timeSeriesIndex)

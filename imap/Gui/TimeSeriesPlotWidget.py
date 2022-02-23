@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Callable, Dict, List
 from pyqtgraph import PlotWidget, mkPen, mkColor, mkBrush
 from PyQt5.Qt import Qt, QSize, QColor
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGridLayout
@@ -21,12 +21,14 @@ class TimeSeriesPlotWidget(QWidget):
         "#855b98",
     ]
 
-    def __init__(self, series: TimeSeries):
+    def __init__(self, series: TimeSeries, timeSeriesIndex: int):
         super().__init__()
 
         self._series = series
         self._times = list(range(series.size))
         self._lastRequestedTimeStep = -1
+        self._timeSeriesIndex = timeSeriesIndex
+        self._legendToggleCallback = None
 
         self._createWidgets()
         self._configureLayout()
@@ -51,6 +53,12 @@ class TimeSeriesPlotWidget(QWidget):
                     plot.setData(x, y)
                 else:
                     plot.setData([], [])
+
+    def setLegendToggleCallback(self, callback: Callable):
+        self._legendToggleCallback = callback
+
+    def toggleLegend(self, legendIndex: int):
+        self._legendWidgets[legendIndex].toggleLegend()
 
     def _createWidgets(self):
         self._plotWidget = PlotWidget()
@@ -117,5 +125,9 @@ class TimeSeriesPlotWidget(QWidget):
 
         self._baselineDataItem.setData(x, [0.5] * len(x))
 
-    def _onLegendToggle(self, index: int):
+    def _onLegendToggle(self, legendIndex: int):
         self.updateFor(self._lastRequestedTimeStep)
+        if self._legendToggleCallback is not None:
+            self._legendToggleCallback(legendIndex, self._timeSeriesIndex)
+
+
