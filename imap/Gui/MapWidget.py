@@ -132,6 +132,7 @@ class MapWidget(QWidget):
 
     def _drawInitialVictims(self):
         for victim in self._trial.victimList:
+            item = None
             if victim.victimType == Constants.VictimType.A:
                 item = self._scene.drawVictimA(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
                 self._victimItems[victim.position] = item
@@ -143,7 +144,24 @@ class MapWidget(QWidget):
                                                       self._blockSize)
                 self._victimItems[victim.position] = item
 
+            if item is not None:
+                self._addedBlockItems[0].append(item)
+
     def _drawInitialRubble(self):
+        for rubblePosition in self._trial.rubbleList:
+            item = None
+            if rubblePosition in self._rubbleItems:
+                # If rubble is comprised of blocks stacked on top of each other, we only draw one and keep a counter
+                # to know how many more there are in the stack per position
+                self._rubbleCounts[rubblePosition] += 1
+            else:
+                item = self._scene.drawRubble(rubblePosition.x, rubblePosition.y, self._blockSize, self._blockSize)
+                self._rubbleCounts[rubblePosition] = 1
+                self._rubbleItems[rubblePosition] = item
+
+            if item is not None:
+                self._addedBlockItems[0].append(item)
+
         objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
@@ -161,24 +179,6 @@ class MapWidget(QWidget):
             item = None
             if row[1] == "block_signal_victim":
                 item = self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
-            elif row[1] == "gravel":
-                if position in self._rubbleItems:
-                    # If rubble is comprised of blocks stacked on top of each other, we only draw one and keep a counter
-                    # to know how many more there are in the stack per position
-                    self._rubbleCounts[position] += 1
-                else:
-                    item = self._scene.drawRubble(x, y, self._blockSize, self._blockSize)
-                    self._rubbleCounts[position] = 1
-                    self._rubbleItems[position] = item
-            # elif row[1] == "block_victim_1":
-            #     item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
-            #     self._victimItems[position] = item
-            # elif row[1] == "block_victim_1b":
-            #     item = self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
-            #     self._victimItems[position] = item
-            # elif row[1] == "block_victim_proximity":
-            #     item = self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
-            #     self._victimItems[position] = item
             elif row[1] == "block_rubble_collapse":
                 item = self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
 
