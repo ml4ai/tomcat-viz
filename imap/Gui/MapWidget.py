@@ -80,8 +80,7 @@ class MapWidget(QWidget):
     def loadTrial(self, trial: Trial):
         self._trial = trial
         self._sceneObjectActions.append([])
-        self._drawInitialVictims()
-        self._drawInitialRubble()
+        self._drawInitialObjects()
         self._placePlayersInTheMap()
         self._lastDrawnTimeStep = 0
         self._maxDrawnTimeStep = 0
@@ -130,6 +129,15 @@ class MapWidget(QWidget):
                 else:
                     self._scene.drawEmptyBlock(j, i, self._blockSize, self._blockSize)
 
+    def _drawInitialObjects(self):
+        self._addedBlockItems.append([])
+        self._removedBlockItems.append([])
+
+        self._drawInitialVictims()
+        self._drawInitialRubble()
+        self._drawInitialRubbleCollapsePlates()
+        self._drawInitialVictimSignalPlates()
+
     def _drawInitialVictims(self):
         for victim in self._trial.victimList:
             item = None
@@ -162,11 +170,16 @@ class MapWidget(QWidget):
             if item is not None:
                 self._addedBlockItems[0].append(item)
 
+    def _drawInitialRubbleCollapsePlates(self):
+        for platePosition in self._trial.threatPlateList:
+            item = self._scene.drawRubbleCollapseBlock(platePosition.x, platePosition.y, self._blockSize,
+                                                       self._blockSize)
+            self._addedBlockItems[0].append(item)
+
+    def _drawInitialVictimSignalPlates(self):
         objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
-        self._addedBlockItems.append([])
-        self._removedBlockItems.append([])
         for i, row in enumerate(csv_reader):
             if i == 0:
                 # Skip header
@@ -175,14 +188,8 @@ class MapWidget(QWidget):
             coordinates = row[0].split()
             x = int(coordinates[0]) - self._map.metadata["min_x"]
             y = int(coordinates[2]) - self._map.metadata["min_y"]
-            position = Position(x, y)
-            item = None
             if row[1] == "block_signal_victim":
                 item = self._scene.drawVictimSignalBlock(x, y, self._blockSize, self._blockSize)
-            elif row[1] == "block_rubble_collapse":
-                item = self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
-
-            if item is not None:
                 self._addedBlockItems[0].append(item)
 
     def _placePlayersInTheMap(self):
