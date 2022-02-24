@@ -7,7 +7,8 @@ from imap.Common.Constants import Constants
 from imap.Gui.DockEstimates import DockEstimates
 from imap.Gui.HeaderWidget import HeaderWidget
 from imap.Gui.MapWidget import MapWidget
-from imap.Gui.TextMessageWidget import TextMessageWidget
+from imap.Gui.SpeechTranscriptionWidget import SpeechTranscriptionWidget
+from imap.Gui.ChatWidget import ChatWidget
 from imap.Gui.TimeSliderWidget import TimeSliderWidget
 from imap.Gui.Utils import createLabel
 from imap.Parser.Estimates import Estimates
@@ -74,7 +75,10 @@ class TomcatVisualizerWidget(QWidget):
         self._timeSlider.setEnabled(False)
 
         self._chatHeaderLabel = createLabel("Chat Messages", Constants.Font.SMALL_BOLD.value, Qt.AlignLeft)
-        self._chatWidget = TextMessageWidget()
+        self._chatWidget = ChatWidget()
+
+        self._speechHeaderLabel = createLabel("Speech Transcriptions", Constants.Font.SMALL_BOLD.value, Qt.AlignLeft)
+        self._speechWidget = SpeechTranscriptionWidget()
 
         self._estimatesHeaderLabel = createLabel("Probability Estimates", Constants.Font.SMALL_BOLD.value, "black",
                                                  Qt.AlignLeft)
@@ -95,9 +99,13 @@ class TomcatVisualizerWidget(QWidget):
         chatPanelWidget = QWidget()
         chatPanelWidget.setLayout(chatLayout)
 
-        # scrollArea = QScrollArea()
-        # scrollArea.setWidget(self._estimatesWidget)
-        # scrollArea.setWidgetResizable(True)
+        speechLayout = QVBoxLayout()
+        speechLayout.setContentsMargins(0, 0, 0, 10)
+        speechLayout.addWidget(self._speechHeaderLabel)
+        speechLayout.addWidget(self._speechWidget)
+        speechPanelWidget = QWidget()
+        speechPanelWidget.setLayout(speechLayout)
+
         self._estimatesLayout = QVBoxLayout()
         self._estimatesLayout.setContentsMargins(0, 0, 0, 0)
         self._estimatesLayout.addWidget(self._estimatesHeaderLabel)
@@ -107,6 +115,7 @@ class TomcatVisualizerWidget(QWidget):
 
         rightPanelSplitter = QSplitter(Qt.Vertical)
         rightPanelSplitter.addWidget(chatPanelWidget)
+        rightPanelSplitter.addWidget(speechPanelWidget)
         rightPanelSplitter.addWidget(estimatesPanelWidget)
 
         mainLayout.addLayout(leftPanelLayout, TomcatVisualizerWidget.LEFT_PANEL_PROP)
@@ -118,6 +127,7 @@ class TomcatVisualizerWidget(QWidget):
         self._updateHeaderInfo(newTimeStep)
         self._mapWidget.updateFor(newTimeStep)
         self._chatWidget.updateFor(newTimeStep)
+        self._speechWidget.updateFor(newTimeStep)
         self._estimatesWidget.updateFor(newTimeStep)
 
     def _initializeTrial(self):
@@ -126,7 +136,12 @@ class TomcatVisualizerWidget(QWidget):
 
         self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
-        self._chatWidget.loadTrial(self._trial)
+        self._chatWidget.loadMessages(self._trial.chatMessages[Constants.Player.RED.value],
+                                      self._trial.chatMessages[Constants.Player.GREEN.value],
+                                      self._trial.chatMessages[Constants.Player.BLUE.value])
+        self._speechWidget.loadMessages(self._trial.speechTranscriptions[Constants.Player.RED.value],
+                                        self._trial.speechTranscriptions[Constants.Player.GREEN.value],
+                                        self._trial.speechTranscriptions[Constants.Player.BLUE.value])
 
         self._timeSlider.setTimeSteps(self._trial.timeSteps)
         self._timeSlider.reset()

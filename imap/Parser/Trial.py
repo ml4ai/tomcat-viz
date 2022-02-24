@@ -102,7 +102,8 @@ class Trial:
         "observations/events/player/rubble_destroyed",
         "observations/events/mission/perturbation",
         "observations/events/player/rubble_collapse",
-        "observations/events/player/itemequipped"
+        "observations/events/player/itemequipped",
+        "agent/asr/final"
     ]
 
     MAP_TOPIC = "ground_truth/semantic_map/initialized"
@@ -138,6 +139,7 @@ class Trial:
         self.playersPositions: List[List[List[Position]]] = []
         self.playersYaws: List[List[float]] = []
         self.chatMessages: List[List[Set[ChatMessage]]] = []
+        self.speechTranscriptions: List[List[List[str]]] = []
         self.playersActions: List[List[Constants.Action]] = []
         self.playersEquippedItems: List[List[Constants.EquippedItem]] = []
 
@@ -163,7 +165,8 @@ class Trial:
             "victim_list": self.victimList,
             "rubble_list": self.rubbleList,
             "threat_plate_list": self.threatPlateList,
-            "victim_signal_plate_list": self.victimSignalPlateList
+            "victim_signal_plate_list": self.victimSignalPlateList,
+            "speech_transcriptions": self.speechTranscriptions
         }
 
         with open(filepath, "wb") as f:
@@ -192,6 +195,7 @@ class Trial:
         self.rubbleList = trialPackage["rubble_list"]
         self.threatPlateList = trialPackage["threat_plate_list"]
         self.victimSignalPlateList = trialPackage["victim_signal_plate_list"]
+        self.speechTranscriptions = trialPackage["speech_transcriptions"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = self._parseGroundTruthAndSortRemainingMessages(trialMessagesFile)
@@ -212,6 +216,7 @@ class Trial:
         self.playersPositions = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersYaws = [[] for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
+        self.speechTranscriptions = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
         self.activeBlackout = []
         self.savedVictims = []
@@ -225,6 +230,7 @@ class Trial:
         currentPlacedMarkers = set()
         currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
+        currentSpeechTranscriptions: List[List[str]] = [[] for _ in range(Constants.NUM_ROLES)]
         currentPlayersActions = [Constants.Action.NONE for _ in range(Constants.NUM_ROLES)]
         currentRubbleCounts = {}
         collapsedRubbleCounts: Set[Position] = set()
@@ -424,6 +430,12 @@ class Trial:
                                 currentRubbleCounts[position] = counts
                                 collapsedRubbleCounts.add(position)
 
+                elif Trial._isMessageOf(message, "observation", "asr:transcription"):
+                    playerId = message["data"]["participant_id"]
+                    playerColor = playerIdToColor[playerId]
+                    text = message["data"]["text"].strip()
+                    currentSpeechTranscriptions[Constants.PLAYER_COLOR_MAP[playerColor].value].append(text)
+
                 elif Trial._isMessageOf(message, "observation", "State"):
                     # Collect observations for the current time step
                     missionTimer = message["data"]["mission_timer"]
@@ -445,6 +457,9 @@ class Trial:
                             for playerIdx, messages in enumerate(self.chatMessages):
                                 messages.append(currentChatMessages[playerIdx].copy())
                                 currentChatMessages[playerIdx].clear()
+                            for playerIdx, texts in enumerate(self.speechTranscriptions):
+                                texts.append(currentSpeechTranscriptions[playerIdx].copy())
+                                currentSpeechTranscriptions[playerIdx].clear()
                             for playerIdx, actions in enumerate(self.playersActions):
                                 actions.append(currentPlayersActions[playerIdx])
                                 if currentPlayersActions[playerIdx] != Constants.Action.CARRYING_VICTIM:
