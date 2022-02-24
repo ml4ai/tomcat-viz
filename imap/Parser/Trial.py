@@ -107,6 +107,8 @@ class Trial:
 
     VICTIM_LIST_TOPIC = "ground_truth/mission/victims_list"
     RUBBLE_LIST_TOPIC = "ground_truth/mission/blockages_list"
+    THREAT_PLATE_LIST_TOPIC = "ground_truth/mission/threatsign_list"
+    VICTIM_SIGNAL_PLATE_LIST_TOPIC = "ground_truth/mission/freezeblock_list"
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
         self.map = mapObject
@@ -118,6 +120,8 @@ class Trial:
         # Ground truth
         self.victimList = []
         self.rubbleList = []
+        self.threatPlateList = []
+        self.victimSignalPlateList = []
 
         self.placedMarkers: List[Set[Marker]] = []
         self.removedMarkers: List[Set[Marker]] = []
@@ -154,7 +158,9 @@ class Trial:
             "placed_victims": self.placedVictims,
             "players_equipped_items": self.playersEquippedItems,
             "victim_list": self.victimList,
-            "rubble_list": self.rubbleList
+            "rubble_list": self.rubbleList,
+            "threat_plate_list": self.threatPlateList,
+            "victim_signal_plate_list": self.victimSignalPlateList
         }
 
         with open(filepath, "wb") as f:
@@ -179,6 +185,8 @@ class Trial:
         self.playersEquippedItems = trialPackage["players_equipped_items"]
         self.victimList = trialPackage["victim_list"]
         self.rubbleList = trialPackage["rubble_list"]
+        self.threatPlateList = trialPackage["threat_plate_list"]
+        self.victimSignalPlateList = trialPackage["victim_signal_plate_list"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = self._parseGroundTruthAndSortRemainingMessages(trialMessagesFile)
@@ -467,6 +475,10 @@ class Trial:
                         groundTruthMessagesMap["victim_list"] = jsonMessage
                     if jsonMessage["topic"] == Trial.RUBBLE_LIST_TOPIC:
                         groundTruthMessagesMap["rubble_list"] = jsonMessage
+                    if jsonMessage["topic"] == Trial.THREAT_PLATE_LIST_TOPIC:
+                        groundTruthMessagesMap["threat_plate_list"] = jsonMessage
+                    if jsonMessage["topic"] == Trial.VICTIM_SIGNAL_PLATE_LIST_TOPIC:
+                        groundTruthMessagesMap["victim_signal_plate_list"] = jsonMessage
                     elif jsonMessage["topic"] in Trial.USED_TOPICS:
                         messages.append(jsonMessage)
 
@@ -481,6 +493,8 @@ class Trial:
     def _parseGroundTruthMessages(self, groundTruthMessagesMap: Dict[str, Any]):
         self._parseVictimList(groundTruthMessagesMap["victim_list"])
         self._parseRubbleList(groundTruthMessagesMap["rubble_list"])
+        self._parseThreatPlateList(groundTruthMessagesMap["threat_plate_list"])
+        self._parseVictimSignalPlateList(groundTruthMessagesMap["victim_signal_plate_list"])
 
     def _parseVictimList(self, message: Dict[str, Any]):
         for victimInfo in message["data"]["mission_victim_list"]:
@@ -494,6 +508,15 @@ class Trial:
             x = blockInfo["x"] - self.map.metadata["min_x"]
             y = blockInfo["z"] - self.map.metadata["min_y"]
             self.rubbleList.append(Position(x, y))
+
+    def _parseThreatPlateList(self, message: Dict[str, Any]):
+        for blockInfo in message["data"]["mission_threatsign_list"]:
+            x = blockInfo["x"] - self.map.metadata["min_x"]
+            y = blockInfo["z"] - self.map.metadata["min_y"]
+            self.threatPlateList.append(Position(x, y))
+
+    def _parseVictimSignalPlateList(self, message: Dict[str, Any]):
+        pass
 
     def _missionTimerToElapsedSeconds(self, timer: str):
         if timer.find(":") >= 0:
