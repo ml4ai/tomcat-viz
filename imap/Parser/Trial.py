@@ -105,24 +105,24 @@ class Trial:
         "observations/events/player/itemequipped"
     ]
 
+    MAP_TOPIC = "ground_truth/semantic_map/initialized"
     VICTIM_LIST_TOPIC = "ground_truth/mission/victims_list"
     RUBBLE_LIST_TOPIC = "ground_truth/mission/blockages_list"
     THREAT_PLATE_LIST_TOPIC = "ground_truth/mission/threatsign_list"
     VICTIM_SIGNAL_PLATE_LIST_TOPIC = "ground_truth/mission/freezeblock_list"
 
-    def __init__(self, mapObject: Map, timeSteps: int = 900):
-        self.map = mapObject
+    def __init__(self, timeSteps: int = 900):
         self.timeSteps = timeSteps
 
-        self.metadata = {}
-        self.scores = np.array([])
-
         # Ground truth
+        self.map = None
         self.victimList = []
         self.rubbleList = []
         self.threatPlateList = []
         self.victimSignalPlateList = []
 
+        self.metadata = {}
+        self.scores = np.array([])
         self.placedMarkers: List[Set[Marker]] = []
         self.removedMarkers: List[Set[Marker]] = []
         self.activeBlackout: List[bool] = []
@@ -144,6 +144,7 @@ class Trial:
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         trialPackage = {
+            "map": self.map,
             "metadata": self.metadata,
             "scores": self.scores,
             "players_positions": self.playersPositions,
@@ -170,6 +171,7 @@ class Trial:
         with open(filepath, "rb") as f:
             trialPackage = pickle.load(f)
 
+        self.map = trialPackage["map"]
         self.metadata = trialPackage["metadata"]
         self.scores = trialPackage["scores"]
         self.playersPositions = trialPackage["players_positions"]
@@ -471,7 +473,9 @@ class Trial:
 
             if jsonMessage is not None:
                 if "topic" in jsonMessage:
-                    if jsonMessage["topic"] == Trial.VICTIM_LIST_TOPIC:
+                    if jsonMessage["topic"] == Trial.MAP_TOPIC:
+                        groundTruthMessagesMap["map"] = jsonMessage
+                    elif jsonMessage["topic"] == Trial.VICTIM_LIST_TOPIC:
                         groundTruthMessagesMap["victim_list"] = jsonMessage
                     if jsonMessage["topic"] == Trial.RUBBLE_LIST_TOPIC:
                         groundTruthMessagesMap["rubble_list"] = jsonMessage
@@ -491,10 +495,15 @@ class Trial:
         return sorted_messages
 
     def _parseGroundTruthMessages(self, groundTruthMessagesMap: Dict[str, Any]):
+        self._parseMap(groundTruthMessagesMap["map"])
         self._parseVictimList(groundTruthMessagesMap["victim_list"])
         self._parseRubbleList(groundTruthMessagesMap["rubble_list"])
         self._parseThreatPlateList(groundTruthMessagesMap["threat_plate_list"])
         self._parseVictimSignalPlateList(groundTruthMessagesMap["victim_signal_plate_list"])
+
+    def _parseMap(self, message: Dict[str, Any]):
+        self.map = Map()
+        self.map.parse(message["data"]["semantic_map"])
 
     def _parseVictimList(self, message: Dict[str, Any]):
         for victimInfo in message["data"]["mission_victim_list"]:

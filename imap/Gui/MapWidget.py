@@ -38,6 +38,9 @@ class MapWidget(QWidget):
         self._scene = CustomScene(0, 0, width, height, Qt.white)
         self._view = QGraphicsView(self._scene, self)
 
+        item = self._scene.addText("MAP", Constants.Font.HUGE_BOLD.value)
+        item.setPos(width / 2 - 70, height / 2 - 70)
+
         self._map = None
         self._trial = None
 
