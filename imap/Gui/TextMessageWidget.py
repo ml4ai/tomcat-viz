@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Collection, Any
 from PyQt5.QtWidgets import QTextEdit
 
 from imap.Common.Format import secondsToTime
@@ -15,22 +15,25 @@ class TextMessageWidget(QTextEdit):
 
         self._htmlTableLines = []
         self._numTableLinesPerTime = []
-        self._trial = None
+
+        self._redMessages = []
+        self._greenMessages = []
+        self._blueMessages = []
 
         self._lastDrawnTimeStep = -1
 
     def updateFor(self, timeStep: int):
         if timeStep > self._lastDrawnTimeStep:
             for t in range(self._lastDrawnTimeStep + 1, timeStep + 1):
-                chatMessages = []
-                for chatMessage in self._trial.chatMessages[Constants.Player.RED.value][t]:
-                    chatMessages.append((chatMessage, secondsToTime(t), "red"))
-                for chatMessage in self._trial.chatMessages[Constants.Player.GREEN.value][t]:
-                    chatMessages.append((chatMessage, secondsToTime(t), "green"))
-                for chatMessage in self._trial.chatMessages[Constants.Player.BLUE.value][t]:
-                    chatMessages.append((chatMessage, secondsToTime(t), "blue"))
-                self._htmlTableLines.extend(self._chatMessagesToHTMLTableLines(chatMessages))
-                self._numTableLinesPerTime.append(len(chatMessages))
+                messages = []
+                for message in self._redMessages[t]:
+                    messages.append((message, secondsToTime(t), "red"))
+                for message in self._greenMessages[t]:
+                    messages.append((message, secondsToTime(t), "green"))
+                for message in self._blueMessages[t]:
+                    messages.append((message, secondsToTime(t), "blue"))
+                self._htmlTableLines.extend(self._messagesToHTMLTableLines(messages))
+                self._numTableLinesPerTime.append(len(messages))
         else:
             for t in range(self._lastDrawnTimeStep - 1, timeStep - 1, -1):
                 linesToRemove = self._numTableLinesPerTime.pop()
@@ -42,8 +45,10 @@ class TextMessageWidget(QTextEdit):
         self.setHtml(self._getHtmlContent())
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
-    def loadTrial(self, trial: Trial):
-        self._trial = trial
+    def loadMessages(self, redMessages: List[Collection[Any]], greenMessages: List[Collection[Any]], blueMessages: List[Collection[Any]]):
+        self._redMessages = redMessages
+        self._greenMessages = greenMessages
+        self._blueMessages = blueMessages
         self._lastDrawnTimeStep = 0
 
     def _getHtmlContent(self):
@@ -51,15 +56,8 @@ class TextMessageWidget(QTextEdit):
         html = f"<html><body>{tableHtml}</body></html>"
         return html
 
-    @staticmethod
-    def _chatMessagesToHTMLTableLines(chatMessages: List[Tuple[ChatMessage,int,str]]):
-        tableLines = []
-        for chatMessage, timer, textColor in chatMessages:
-            row = f"<tr><td><span style = 'color: {chatMessage.color}; font-weight: bold'>[{timer}]:</span></td>" \
-                  f"<td><span style = 'color: {chatMessage.color}; font-weight: bold'>{chatMessage.sender} - </span></td>" \
-                  f"<td><span style = 'color: {textColor};'>{chatMessage.text}</span></td></tr>"
-            tableLines.append(row)
-
-        return tableLines
+    def _messagesToHTMLTableLines(self, messages: List[Tuple[Any, int, str]]):
+        # To be implemented by the subclasses
+        return []
 
 
