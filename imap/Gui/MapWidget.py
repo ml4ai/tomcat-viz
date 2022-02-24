@@ -80,7 +80,8 @@ class MapWidget(QWidget):
     def loadTrial(self, trial: Trial):
         self._trial = trial
         self._sceneObjectActions.append([])
-        self._drawInitialVictimsAndRubbles()
+        self._drawInitialVictims()
+        self._drawInitialRubble()
         self._placePlayersInTheMap()
         self._lastDrawnTimeStep = 0
         self._maxDrawnTimeStep = 0
@@ -129,7 +130,20 @@ class MapWidget(QWidget):
                 else:
                     self._scene.drawEmptyBlock(j, i, self._blockSize, self._blockSize)
 
-    def _drawInitialVictimsAndRubbles(self):
+    def _drawInitialVictims(self):
+        for victim in self._trial.victimList:
+            if victim.victimType == Constants.VictimType.A:
+                item = self._scene.drawVictimA(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+                self._victimItems[victim.position] = item
+            elif victim.victimType == Constants.VictimType.B:
+                item = self._scene.drawVictimB(victim.position.x, victim.position.y, self._blockSize, self._blockSize)
+                self._victimItems[victim.position] = item
+            elif victim.victimType == Constants.VictimType.CRITICAL:
+                item = self._scene.drawCriticalVictim(victim.position.x, victim.position.y, self._blockSize,
+                                                      self._blockSize)
+                self._victimItems[victim.position] = item
+
+    def _drawInitialRubble(self):
         objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
@@ -156,15 +170,15 @@ class MapWidget(QWidget):
                     item = self._scene.drawRubble(x, y, self._blockSize, self._blockSize)
                     self._rubbleCounts[position] = 1
                     self._rubbleItems[position] = item
-            elif row[1] == "block_victim_1":
-                item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
-                self._victimItems[position] = item
-            elif row[1] == "block_victim_1b":
-                item = self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
-                self._victimItems[position] = item
-            elif row[1] == "block_victim_proximity":
-                item = self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
-                self._victimItems[position] = item
+            # elif row[1] == "block_victim_1":
+            #     item = self._scene.drawVictimA(x, y, self._blockSize, self._blockSize)
+            #     self._victimItems[position] = item
+            # elif row[1] == "block_victim_1b":
+            #     item = self._scene.drawVictimB(x, y, self._blockSize, self._blockSize)
+            #     self._victimItems[position] = item
+            # elif row[1] == "block_victim_proximity":
+            #     item = self._scene.drawCriticalVictim(x, y, self._blockSize, self._blockSize)
+            #     self._victimItems[position] = item
             elif row[1] == "block_rubble_collapse":
                 item = self._scene.drawRubbleCollapseBlock(x, y, self._blockSize, self._blockSize)
 
@@ -211,7 +225,8 @@ class MapWidget(QWidget):
     def _createPlayerItemsAt(self, timeStep: int) -> List[QGraphicsItem]:
         items = [
             self._scene.drawRed(self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].x,
-                                self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].y, self._blockSize,
+                                self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].y,
+                                self._blockSize,
                                 self._playerSize),
             self._scene.drawGreen(self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].x,
                                   self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].y,

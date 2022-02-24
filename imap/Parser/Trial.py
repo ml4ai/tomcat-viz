@@ -31,25 +31,6 @@ class ChatMessage:
         return hash(f"{self.sender}#{self.addressee}#{self.text}")
 
 
-# class Block:
-#
-#     def __init__(self, blockType: Constants.BlockType, x: float, y: float):
-#         self.blockType = blockType
-#         self.x = x
-#         self.y = y
-#
-#     def __eq__(self, other):
-#         return (isinstance(other, self.__class__) and
-#                 getattr(other, 'blockType', None) == self.blockType and
-#                 getattr(other, 'x', None) == self.x and
-#                 getattr(other, 'y', None) == self.y)
-#
-#     def __hash__(self):
-#         return hash(f"{self.blockType}#{self.x}#{self.y}")
-#
-#     def __repr__(self):
-#         return f"{self.blockType}#{self.x}#{self.y}"
-
 class Position:
 
     def __init__(self, x: float, y: float):
@@ -124,6 +105,8 @@ class Trial:
         "observations/events/player/itemequipped"
     ]
 
+    VICTIM_LIST_TOPIC = "ground_truth/mission/victims_list"
+
     def __init__(self, mapObject: Map, timeSteps: int = 900):
         self.map = mapObject
         self.timeSteps = timeSteps
@@ -131,16 +114,19 @@ class Trial:
         self.metadata = {}
         self.scores = np.array([])
 
+        # Ground truth
+        self.victimList = []
+        self.rubbleList = []
+
         self.placedMarkers: List[Set[Marker]] = []
         self.removedMarkers: List[Set[Marker]] = []
-
-        # List of rubbles added or removed in each position per time step
-        self.rubbleCounts: List[Dict[Position, int]] = []
-
         self.activeBlackout: List[bool] = []
         self.savedVictims: List[Set[Victim]] = []
         self.pickedUpVictims: List[Set[Victim]] = []
         self.placedVictims: List[Set[Victim]] = []
+
+        # List of rubbles added or removed in each position per time step
+        self.rubbleCounts: List[Dict[Position, int]] = []
 
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
@@ -166,6 +152,7 @@ class Trial:
             "picked_up_victims": self.pickedUpVictims,
             "placed_victims": self.placedVictims,
             "players_equipped_items": self.playersEquippedItems,
+            "victim_list": self.victimList
         }
 
         with open(filepath, "wb") as f:
@@ -188,9 +175,10 @@ class Trial:
         self.pickedUpVictims = trialPackage["picked_up_victims"]
         self.placedVictims = trialPackage["placed_victims"]
         self.playersEquippedItems = trialPackage["players_equipped_items"]
+        self.victimList = trialPackage["victim_list"]
 
     def parse(self, trialMessagesFile: TextIO):
-        messages = Trial._sortMessages(trialMessagesFile)
+        messages = self._parseGroundTruthAndSortRemainingMessages(trialMessagesFile)
 
         if len(messages) == 0:
             return
@@ -459,17 +447,9 @@ class Trial:
                     if nextTimeStep == self.timeSteps:
                         break
 
-    def _missionTimerToElapsedSeconds(self, timer: str):
-        if timer.find(":") >= 0:
-            minutes = int(timer[:timer.find(":")])
-            seconds = int(timer[timer.find(":") + 1:])
-            return self.timeSteps - (seconds + minutes * 60)
-
-        return -1
-
-    @staticmethod
-    def _sortMessages(trialMessagesFile: TextIO) -> List[Any]:
+    def _parseGroundTruthAndSortRemainingMessages(self, trialMessagesFile: TextIO) -> List[Any]:
         messages = []
+        groundTruthMessagesMap: Dict[str, Any] = {}
 
         for line in trialMessagesFile:
             jsonMessage = None
@@ -479,8 +459,13 @@ class Trial:
                 print(f"Bad json line of len: {len(line)}, {line}")
 
             if jsonMessage is not None:
-                if "topic" in jsonMessage and jsonMessage["topic"] in Trial.USED_TOPICS:
-                    messages.append(jsonMessage)
+                if "topic" in jsonMessage:
+                    if jsonMessage["topic"] == Trial.VICTIM_LIST_TOPIC:
+                        groundTruthMessagesMap["victim_list"] = jsonMessage
+                    elif jsonMessage["topic"] in Trial.USED_TOPICS:
+                        messages.append(jsonMessage)
+
+        self._parseGroundTruthMessages(groundTruthMessagesMap)
 
         sorted_messages = sorted(
             messages, key=lambda x: parse(x["header"]["timestamp"])
@@ -488,13 +473,31 @@ class Trial:
 
         return sorted_messages
 
+    def _parseGroundTruthMessages(self, groundTruthMessagesMap: Dict[str, Any]):
+        self._parseVictimList(groundTruthMessagesMap["victim_list"])
+
+    def _parseVictimList(self, message: Dict[str, Any]):
+        for victimInfo in message["data"]["mission_victim_list"]:
+            x = victimInfo["x"] - self.map.metadata["min_x"]
+            y = victimInfo["z"] - self.map.metadata["min_y"]
+            victimType = Trial._getVictimTypeFromBlockStringType(victimInfo["block_type"])
+            self.victimList.append(Victim(victimType, x, y))
+
+    def _missionTimerToElapsedSeconds(self, timer: str):
+        if timer.find(":") >= 0:
+            minutes = int(timer[:timer.find(":")])
+            seconds = int(timer[timer.find(":") + 1:])
+            return self.timeSteps - (seconds + minutes * 60)
+
+        return -1
+
     @staticmethod
     def _isMessageOf(message: json, type: str, subType: str):
         return message["header"]["message_type"].lower() == type.lower() and message["msg"][
             "sub_type"].lower() == subType.lower()
 
     @staticmethod
-    def _getRoleFromStringType(stringType: str) -> Constants.MarkerType:
+    def _getRoleFromStringType(stringType: str) -> Constants.Role:
         role = None
         if "transport" in stringType:
             role = Constants.Role.TRANSPORTER
@@ -573,3 +576,14 @@ class Trial:
 
         return itemType
 
+    @staticmethod
+    def _getVictimTypeFromBlockStringType(stringType: str) -> Constants.VictimType:
+        victimType = None
+        if "victim_1" in stringType:
+            victimType = Constants.VictimType.A
+        elif "victim_1b" in stringType:
+            victimType = Constants.VictimType.B
+        elif "victim_proximity" in stringType:
+            victimType = Constants.VictimType.CRITICAL
+
+        return victimType
