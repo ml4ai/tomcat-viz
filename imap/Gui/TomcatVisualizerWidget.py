@@ -1,25 +1,17 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton, QSplitter
-from PyQt5.Qt import Qt, QFont, QMenu, QAction, QPalette, QColor
+from PyQt5.Qt import Qt, QPalette, QColor
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QSplitter
+from PyQt5.QtWidgets import QWidget
 
-from imap.Gui.Utils import createLabel
-from imap.Gui.TextMessageWidget import TextMessageWidget
-from imap.Gui.EstimatesWidget import EstimatesWidget
-from imap.Common.Format import secondsToTime
 from imap.Common.Constants import Constants
-from imap.Gui.MapWidget import MapWidget
-from imap.Parser.Map import Map
-from imap.Parser.Trial import Trial
-from imap.Parser.Estimates import Estimates
-from imap.Gui.HeaderWidget import HeaderWidget
-from imap.Gui.TimeSliderWidget import TimeSliderWidget
 from imap.Gui.DockEstimates import DockEstimates
-
-import json
-import numpy as np
-from pkg_resources import resource_stream
-import codecs
+from imap.Gui.HeaderWidget import HeaderWidget
+from imap.Gui.MapWidget import MapWidget
+from imap.Gui.TextMessageWidget import TextMessageWidget
+from imap.Gui.TimeSliderWidget import TimeSliderWidget
+from imap.Gui.Utils import createLabel
+from imap.Parser.Estimates import Estimates
+from imap.Parser.Trial import Trial
 
 
 class TomcatVisualizerWidget(QWidget):
@@ -38,14 +30,12 @@ class TomcatVisualizerWidget(QWidget):
         self._createWidgets()
         self._configureLayout()
 
-        self._loadDefaultMap()
-
         self._trial = None
 
     def loadTrialFromMetadata(self, filepath: str):
         if filepath != "":
             with open(filepath, "r") as f:
-                self._trial = Trial(self._map)
+                self._trial = Trial()
                 self._trial.parse(f)
             self._initializeTrial()
             return True
@@ -54,7 +44,7 @@ class TomcatVisualizerWidget(QWidget):
 
     def loadTrialFromPackage(self, filepath: str):
         if filepath != "":
-            self._trial = Trial(self._map)
+            self._trial = Trial()
             self._trial.load(filepath)
             self._initializeTrial()
             return True
@@ -132,7 +122,7 @@ class TomcatVisualizerWidget(QWidget):
 
     def _initializeTrial(self):
         self._mapWidget.reset()
-        self._loadDefaultMap()
+        self._mapWidget.loadMap(self._trial.map)
 
         self._initializeHeaderInfo()
         self._mapWidget.loadTrial(self._trial)
@@ -152,14 +142,6 @@ class TomcatVisualizerWidget(QWidget):
         self._headerPanel.setGreenPlayerRole(self._trial.metadata["green_role"])
         self._headerPanel.setBluePlayerRole(self._trial.metadata["blue_role"])
         self._updateHeaderInfo(0)
-
-    def _loadDefaultMap(self):
-        objects_resource = resource_stream("imap.Resources.Maps", "Saturn_2.6_3D_sm_v1.0.json")
-        utf8_reader = codecs.getreader("utf-8")
-        jsonMap = json.load(utf8_reader(objects_resource))
-        self._map = Map()
-        self._map.parse(jsonMap)
-        self._mapWidget.loadMap(self._map)
 
     def _updateHeaderInfo(self, timeStep: int):
         self._headerPanel.setScore(self._trial.scores[timeStep])
