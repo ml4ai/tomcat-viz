@@ -136,6 +136,7 @@ class Trial:
         # Each list contains 3 entries. One per player. For each player there will be #timeSteps entries. And for each
         # of these, there might be multiple values (e.g. chat messages)
         self.playersPositions: List[List[List[Position]]] = []
+        self.playersYaws: List[List[float]] = []
         self.chatMessages: List[List[Set[ChatMessage]]] = []
         self.playersActions: List[List[Constants.Action]] = []
         self.playersEquippedItems: List[List[Constants.EquippedItem]] = []
@@ -148,6 +149,7 @@ class Trial:
             "metadata": self.metadata,
             "scores": self.scores,
             "players_positions": self.playersPositions,
+            "players_yaws": self.playersYaws,
             "placed_markers": self.placedMarkers,
             "removed_markers": self.removedMarkers,
             "chat_messages": self.chatMessages,
@@ -175,6 +177,7 @@ class Trial:
         self.metadata = trialPackage["metadata"]
         self.scores = trialPackage["scores"]
         self.playersPositions = trialPackage["players_positions"]
+        self.playersYaws = trialPackage["players_yaws"]
         self.placedMarkers = trialPackage["placed_markers"]
         self.removedMarkers = trialPackage["removed_markers"]
         self.chatMessages = trialPackage["chat_messages"]
@@ -207,6 +210,7 @@ class Trial:
         self.removedMarkers = []
         self.rubbleCounts = []
         self.playersPositions = [[] for _ in range(Constants.NUM_ROLES)]
+        self.playersYaws = [[] for _ in range(Constants.NUM_ROLES)]
         self.chatMessages = [[] for _ in range(Constants.NUM_ROLES)]
         self.playersActions = [[] for _ in range(Constants.NUM_ROLES)]
         self.activeBlackout = []
@@ -217,6 +221,7 @@ class Trial:
         # Some will have their value reset in the end of a time step.
         currentScore = 0
         currentPlayersPositions: List[List[Position]] = [[] for _ in range(Constants.NUM_ROLES)]
+        currentPlayersYaws: List[float] = [0 for _ in range(Constants.NUM_ROLES)]
         currentPlacedMarkers = set()
         currentRemovedMarkers = set()
         currentChatMessages: List[Set[ChatMessage]] = [set() for _ in range(Constants.NUM_ROLES)]
@@ -271,7 +276,10 @@ class Trial:
                 playerColor = playerIdToColor[playerId]
                 x = message["data"]["x"] - self.map.metadata["min_x"]
                 y = message["data"]["z"] - self.map.metadata["min_y"]
+                yaw = message["data"]["yaw"]
                 position = Position(x, y)
+
+                currentPlayersYaws[Constants.PLAYER_COLOR_MAP[playerColor].value] = yaw
 
                 if len(currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value]) > 0:
                     if currentPlayersPositions[Constants.PLAYER_COLOR_MAP[playerColor].value][-1] != position:
@@ -432,6 +440,8 @@ class Trial:
                                 else:
                                     positions.append(currentPlayersPositions[playerIdx].copy())
                                 currentPlayersPositions[playerIdx].clear()
+                            for playerIdx, yaws in enumerate(self.playersYaws):
+                                yaws.append(currentPlayersYaws[playerIdx])
                             for playerIdx, messages in enumerate(self.chatMessages):
                                 messages.append(currentChatMessages[playerIdx].copy())
                                 currentChatMessages[playerIdx].clear()

@@ -37,7 +37,6 @@ class MapWidget(QWidget):
         self.setFixedWidth(width)
         self._scene = CustomScene(0, 0, width, height, Qt.white)
         self._view = QGraphicsView(self._scene, self)
-
         item = self._scene.addText("MAP", Constants.Font.HUGE_BOLD.value)
         item.setPos(width / 2 - 70, height / 2 - 70)
 
@@ -234,14 +233,29 @@ class MapWidget(QWidget):
 
     def _createPlayerItemsAt(self, timeStep: int) -> List[QGraphicsItem]:
         items = [
+            self._scene.drawRedHeading(self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].x,
+                                       self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].y,
+                                       self._trial.playersYaws[Constants.Player.RED.value][timeStep],
+                                       self._blockSize,
+                                       self._playerSize),
             self._scene.drawRed(self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].x,
                                 self._trial.playersPositions[Constants.Player.RED.value][timeStep][-1].y,
                                 self._blockSize,
                                 self._playerSize),
+            self._scene.drawGreenHeading(self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].x,
+                                         self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].y,
+                                         self._trial.playersYaws[Constants.Player.GREEN.value][timeStep],
+                                         self._blockSize,
+                                         self._playerSize),
             self._scene.drawGreen(self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].x,
                                   self._trial.playersPositions[Constants.Player.GREEN.value][timeStep][-1].y,
                                   self._blockSize,
                                   self._playerSize),
+            self._scene.drawBlueHeading(self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].x,
+                                        self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].y,
+                                        self._trial.playersYaws[Constants.Player.BLUE.value][timeStep],
+                                        self._blockSize,
+                                        self._playerSize),
             self._scene.drawBlue(self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].x,
                                  self._trial.playersPositions[Constants.Player.BLUE.value][timeStep][-1].y,
                                  self._blockSize,
