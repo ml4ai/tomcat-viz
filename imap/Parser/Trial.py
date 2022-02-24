@@ -106,6 +106,7 @@ class Trial:
     ]
 
     VICTIM_LIST_TOPIC = "ground_truth/mission/victims_list"
+    RUBBLE_LIST_TOPIC = "ground_truth/mission/blockages_list"
 
     def __init__(self, mapObject: Map, timeSteps: int = 900):
         self.map = mapObject
@@ -152,7 +153,8 @@ class Trial:
             "picked_up_victims": self.pickedUpVictims,
             "placed_victims": self.placedVictims,
             "players_equipped_items": self.playersEquippedItems,
-            "victim_list": self.victimList
+            "victim_list": self.victimList,
+            "rubble_list": self.rubbleList
         }
 
         with open(filepath, "wb") as f:
@@ -176,6 +178,7 @@ class Trial:
         self.placedVictims = trialPackage["placed_victims"]
         self.playersEquippedItems = trialPackage["players_equipped_items"]
         self.victimList = trialPackage["victim_list"]
+        self.rubbleList = trialPackage["rubble_list"]
 
     def parse(self, trialMessagesFile: TextIO):
         messages = self._parseGroundTruthAndSortRemainingMessages(trialMessagesFile)
@@ -462,6 +465,8 @@ class Trial:
                 if "topic" in jsonMessage:
                     if jsonMessage["topic"] == Trial.VICTIM_LIST_TOPIC:
                         groundTruthMessagesMap["victim_list"] = jsonMessage
+                    if jsonMessage["topic"] == Trial.RUBBLE_LIST_TOPIC:
+                        groundTruthMessagesMap["rubble_list"] = jsonMessage
                     elif jsonMessage["topic"] in Trial.USED_TOPICS:
                         messages.append(jsonMessage)
 
@@ -475,6 +480,7 @@ class Trial:
 
     def _parseGroundTruthMessages(self, groundTruthMessagesMap: Dict[str, Any]):
         self._parseVictimList(groundTruthMessagesMap["victim_list"])
+        self._parseRubbleList(groundTruthMessagesMap["rubble_list"])
 
     def _parseVictimList(self, message: Dict[str, Any]):
         for victimInfo in message["data"]["mission_victim_list"]:
@@ -482,6 +488,12 @@ class Trial:
             y = victimInfo["z"] - self.map.metadata["min_y"]
             victimType = Trial._getVictimTypeFromBlockStringType(victimInfo["block_type"])
             self.victimList.append(Victim(victimType, x, y))
+
+    def _parseRubbleList(self, message: Dict[str, Any]):
+        for blockInfo in message["data"]["mission_blockage_list"]:
+            x = blockInfo["x"] - self.map.metadata["min_x"]
+            y = blockInfo["z"] - self.map.metadata["min_y"]
+            self.rubbleList.append(Position(x, y))
 
     def _missionTimerToElapsedSeconds(self, timer: str):
         if timer.find(":") >= 0:
