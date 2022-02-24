@@ -1,9 +1,8 @@
 from typing import List, Tuple, Collection, Any
+
 from PyQt5.QtWidgets import QTextEdit
 
 from imap.Common.Format import secondsToTime
-from imap.Parser.Trial import Trial, ChatMessage
-from imap.Common.Constants import Constants
 
 
 class TextMessageWidget(QTextEdit):

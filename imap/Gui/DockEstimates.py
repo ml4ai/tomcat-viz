@@ -1,10 +1,11 @@
 from typing import Any, Callable
-from PyQt5.QtWidgets import QMainWindow, QScrollArea, QWidget, QPushButton, QVBoxLayout
-from PyQt5.Qt import QPalette, QColor
 
+from PyQt5.Qt import QPalette, QColor
+from PyQt5.QtWidgets import QScrollArea, QWidget, QPushButton, QVBoxLayout
+
+from imap.Common.Constants import Constants
 from imap.Gui.EstimatesWidget import EstimatesWidget
 from imap.Parser.Estimates import Estimates
-from imap.Common.Constants import Constants
 
 
 class UndockedWidget(QWidget):
