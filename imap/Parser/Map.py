@@ -1,8 +1,9 @@
-from typing import List, Tuple, Set
-import os
-import numpy as np
 import json
+import os
 import pickle
+from typing import Tuple, Set
+
+import numpy as np
 
 
 class Block:

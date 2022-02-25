@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import List
 
 from imap.Common.Constants import Constants
 

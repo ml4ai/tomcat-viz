@@ -3,10 +3,11 @@ Based on code from https://stackoverflow.com/questions/52615115/how-to-create-co
 """
 
 from typing import Any, Callable
-from PyQt5.QtWidgets import QWidget, QToolButton, QScrollArea, QSizePolicy, QFrame
-from PyQt5.QtWidgets import QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSlot
+
 from PyQt5.QtCore import QParallelAnimationGroup, QPropertyAnimation, QAbstractAnimation
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QToolButton, QScrollArea, QSizePolicy, QFrame
 
 from imap.Common.Constants import Constants
 

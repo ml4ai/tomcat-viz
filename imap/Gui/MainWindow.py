@@ -1,26 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QScrollArea, QFrame
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
-from PyQt5.QtWidgets import QCheckBox, QSlider, QFileDialog, QPushButton, QSplitter
-from PyQt5.Qt import Qt, QFont, QMenu, QAction
-from PyQt5.QtWidgets import QApplication
+from PyQt5.Qt import QMenu, QAction
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QMainWindow
 
-from imap.Gui.Utils import createLabel
-from imap.Gui.TextMessageWidget import TextMessageWidget
-from imap.Gui.EstimatesWidget import EstimatesWidget
-from imap.Common.Format import secondsToTime
-from imap.Common.Constants import Constants
-from imap.Gui.MapWidget import MapWidget
-from imap.Parser.Map import Map
-from imap.Parser.Trial import Trial
-from imap.Parser.Estimates import Estimates
-from imap.Gui.HeaderWidget import HeaderWidget
-from imap.Gui.TimeSliderWidget import TimeSliderWidget
 from imap.Gui.TomcatVisualizerWidget import TomcatVisualizerWidget
-
-import json
-import numpy as np
-from pkg_resources import resource_stream
-import codecs
 
 
 class MainWindow(QMainWindow):

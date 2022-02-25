@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.Qt import Qt, QSize, QPixmap, QPalette, QColor
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from pkg_resources import resource_string
 
-from imap.Gui.Utils import createLabel, createEmptyWidget, createStampedBlockWidget, BlockIconWidget
 from imap.Common.Constants import Constants
+from imap.Gui.Utils import createLabel
 
 
 class EquippedItemWidget(QWidget):

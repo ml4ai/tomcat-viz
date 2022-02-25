@@ -1,7 +1,5 @@
-from PyQt5.QtWidgets import QLabel, QFrame, QWidget, QVBoxLayout
 from PyQt5.Qt import QFont, Qt, QSize, QPalette, QColor, QBrush, QPainter, QPen
-from PyQt5 import QtGui
-from imap.Common.Constants import Constants
+from PyQt5.QtWidgets import QLabel, QFrame, QWidget
 
 
 def createLabel(text: str, font: QFont, color: str = "color", alignment: Qt.Alignment = Qt.AlignLeft) -> QLabel:

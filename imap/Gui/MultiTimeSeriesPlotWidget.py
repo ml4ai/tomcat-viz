@@ -1,12 +1,12 @@
 from typing import Callable, List
-from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QVBoxLayout, QLineEdit
 
-from imap.Parser.Estimates import TimeSeries
+from PyQt5.QtWidgets import QVBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QWidget
+
+from imap.Common.Constants import Constants
 from imap.Gui.TimeSeriesPlotWidget import TimeSeriesPlotWidget
 from imap.Gui.Utils import createHorizontalSeparator
-from imap.Common.Constants import Constants
+from imap.Parser.Estimates import TimeSeries
 
 
 class MultiTimeSeriesPlotWidget(QWidget):

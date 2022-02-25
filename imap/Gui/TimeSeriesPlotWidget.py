@@ -1,14 +1,13 @@
-from typing import Callable, Dict, List
-from pyqtgraph import PlotWidget, mkPen, mkColor, mkBrush
-from PyQt5.Qt import Qt, QSize, QColor, QMimeData, QPixmap
+from typing import Callable
+
+from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGridLayout
-from PyQt5.QtWidgets import QSizePolicy
-from PyQt5.QtGui import QDrag
+from pyqtgraph import PlotWidget, mkPen, mkColor, mkBrush
 
 from imap.Common.Constants import Constants
 from imap.Common.Format import secondsToTime
-from imap.Parser.Estimates import TimeSeries
 from imap.Gui.PlotLegendWidget import PlotLegendWidget
+from imap.Parser.Estimates import TimeSeries
 
 
 class TimeSeriesPlotWidget(QWidget):
