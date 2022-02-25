@@ -3,16 +3,16 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout
 from PyQt5.QtWidgets import QSplitter
 from PyQt5.QtWidgets import QWidget
 
-from imap.Common.Constants import Constants
-from imap.Gui.DockEstimates import DockEstimates
-from imap.Gui.HeaderWidget import HeaderWidget
-from imap.Gui.MapWidget import MapWidget
-from imap.Gui.SpeechTranscriptionWidget import SpeechTranscriptionWidget
-from imap.Gui.ChatWidget import ChatWidget
-from imap.Gui.TimeSliderWidget import TimeSliderWidget
-from imap.Gui.Utils import createLabel
-from imap.Parser.Estimates import Estimates
-from imap.Parser.Trial import Trial
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.DockEstimates import DockEstimates
+from tomcat_viz.Gui.HeaderWidget import HeaderWidget
+from tomcat_viz.Gui.MapWidget import MapWidget
+from tomcat_viz.Gui.SpeechTranscriptionWidget import SpeechTranscriptionWidget
+from tomcat_viz.Gui.ChatWidget import ChatWidget
+from tomcat_viz.Gui.TimeSliderWidget import TimeSliderWidget
+from tomcat_viz.Gui.Utils import createLabel
+from tomcat_viz.Parser.Estimates import Estimates
+from tomcat_viz.Parser.Trial import Trial
 
 
 class TomcatVisualizerWidget(QWidget):

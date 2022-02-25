@@ -3,9 +3,9 @@ from typing import Callable
 from PyQt5.Qt import Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSlider, QStyle, QToolButton
 
-from imap.Common.Constants import Constants
-from imap.Common.Format import secondsToTime
-from imap.Gui.Utils import createLabel
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Common.Format import secondsToTime
+from tomcat_viz.Gui.Utils import createLabel
 
 
 class TimeSliderWidget(QWidget):

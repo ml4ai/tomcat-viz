@@ -2,7 +2,7 @@ from PyQt5.Qt import QMenu, QAction
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMainWindow
 
-from imap.Gui.TomcatVisualizerWidget import TomcatVisualizerWidget
+from tomcat_viz.Gui.TomcatVisualizerWidget import TomcatVisualizerWidget
 
 
 class MainWindow(QMainWindow):

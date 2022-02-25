@@ -3,9 +3,9 @@ from typing import Any, Callable
 from PyQt5.Qt import QPalette, QColor
 from PyQt5.QtWidgets import QScrollArea, QWidget, QPushButton, QVBoxLayout, QMainWindow
 
-from imap.Common.Constants import Constants
-from imap.Gui.EstimatesWidget import EstimatesWidget
-from imap.Parser.Estimates import Estimates
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.EstimatesWidget import EstimatesWidget
+from tomcat_viz.Parser.Estimates import Estimates
 
 
 class UndockedWidget(QWidget):

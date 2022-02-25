@@ -1,7 +1,7 @@
 from PyQt5.Qt import QGraphicsScene, Qt, QPen, QBrush, QFont, QGraphicsItem, QColor, QGraphicsEllipseItem
 
-from imap.Gui.StampedRectItem import StampedRectItem
-from imap.Common.Constants import Constants
+from tomcat_viz.Gui.StampedRectItem import StampedRectItem
+from tomcat_viz.Common.Constants import Constants
 
 
 class CustomScene(QGraphicsScene):

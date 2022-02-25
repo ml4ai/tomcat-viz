@@ -2,8 +2,8 @@ from typing import Any, Callable
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QGraphicsOpacityEffect
 from PyQt5.Qt import Qt, QSize
 
-from imap.Common.Constants import Constants
-from imap.Gui.Utils import createLabel, createEmptyWidget
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.Utils import createLabel, createEmptyWidget
 
 
 class PlotLegendWidget(QWidget):

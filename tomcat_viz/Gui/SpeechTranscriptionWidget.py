@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from imap.Gui.TextMessageWidget import TextMessageWidget
+from tomcat_viz.Gui.TextMessageWidget import TextMessageWidget
 
 
 class SpeechTranscriptionWidget(TextMessageWidget):

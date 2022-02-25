@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
-from imap.Gui.TextMessageWidget import TextMessageWidget
-from imap.Parser.Trial import ChatMessage
+from tomcat_viz.Gui.TextMessageWidget import TextMessageWidget
+from tomcat_viz.Parser.Trial import ChatMessage
 
 
 class ChatWidget(TextMessageWidget):

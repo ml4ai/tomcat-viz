@@ -5,8 +5,8 @@ from dateutil.parser import parse
 import numpy as np
 import pickle
 
-from imap.Parser.Map import Map
-from imap.Common.Constants import Constants
+from tomcat_viz.Parser.Map import Map
+from tomcat_viz.Common.Constants import Constants
 
 
 class ChatMessage:
