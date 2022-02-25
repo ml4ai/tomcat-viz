@@ -17,7 +17,7 @@ After installing the libraries, the program can be execute with the following in
 python main.py
 ```
 
-| ![Program Image](https://github.com/paulosoaresua/tomcat-viz/blob/main/imap/Resources/Images/Gameplays/Gameplay.png?raw=true) |
+| ![Program Image](https://github.com/paulosoaresua/tomcat-viz/blob/main/tomcat_viz/Resources/Images/Gameplays/Gameplay.png?raw=true) |
 |:--:|
 |ToMCAT-Viz.|
 
