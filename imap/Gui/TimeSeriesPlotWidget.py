@@ -12,6 +12,7 @@ from imap.Parser.Estimates import TimeSeries
 
 class TimeSeriesPlotWidget(QWidget):
     MARKER_SIZE = 5
+    LEGENDS_PER_ROW = 2
     COLOR_PALETTE = [
         "#105ca4",
         "#fe9602",
@@ -72,15 +73,18 @@ class TimeSeriesPlotWidget(QWidget):
                 self._legendWidgets.append(legendWidget)
 
     def _configureLayout(self):
-        # 3 legends per row
         legendsLayout = QGridLayout()
+        legendsLayout.setContentsMargins(0, 0, 0, 0)
         legendsLayout.setAlignment(Qt.AlignCenter)
         legendsLayout.setHorizontalSpacing(20)
         row = 0
-        for col, legendWidget in enumerate(self._legendWidgets):
+        col = 0
+        for legendWidget in self._legendWidgets:
             legendsLayout.addWidget(legendWidget, row, col)
+            col += 1
 
-            if col > 0 and col % 3 == 0:
+            if col > 0 and col % TimeSeriesPlotWidget.LEGENDS_PER_ROW == 0:
+                col = 0
                 row += 1
 
         mainLayout = QVBoxLayout(self)
@@ -143,5 +147,3 @@ class TimeSeriesPlotWidget(QWidget):
         self.updateFor(self._lastRequestedTimeStep)
         if self._legendToggleCallback is not None:
             self._legendToggleCallback(legendIndex, self._timeSeriesIndex)
-
-

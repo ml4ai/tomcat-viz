@@ -36,14 +36,15 @@ class Estimates:
 
                 color = estimator["node_label"].split("_")[-1].lower()
                 terms = estimator["node_label"].split("_")
+                categories = estimator.get("categories", None)
                 if color in ["red", "green", "blue"]:
                     # We remove the color identification from the variable name and replace
                     # underscores with blank spaces. This is just for aesthetics because the the variable name will
                     # be used as the title of the plot.
                     variableName = " ".join(terms[:-1])
-                    series = TimeSeries(variableName, values)
+                    series = TimeSeries(variableName, values, categories)
                     self.playerSeries[Constants.PLAYER_COLOR_MAP[color].value].append(series)
                 else:
                     variableName = " ".join(terms)
-                    series = TimeSeries(variableName, values)
+                    series = TimeSeries(variableName, values, categories)
                     self.teamSeries.append(series)
