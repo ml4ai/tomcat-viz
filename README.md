@@ -62,7 +62,11 @@ At any time, it is possible to load an extra file containing probability estimat
                             ]
                         }
                     ],                    
-                    "node_label": "Belief_About_Coordination"
+                    "node_label": "Belief_About_Coordination",
+                    "categories": [
+                      "Uncoordinated",
+                      "Coordinated"
+                    ]
                 }
             ]
         }
@@ -71,6 +75,8 @@ At any time, it is possible to load an extra file containing probability estimat
 ```
 
 Each estimator gives rise to one plot. The title of the plot is extracted from the value in the `node_label` field. If it contains the word red/green/blue, the plot will be placed in the corresponding player section in the plot panel. Otherwise, it will fall under the team section. Inside the `estimates` field, there should be as many lines as the number of series to plot. The numbers inside each series comprise the time series of probabilities. 
+
+The values in the `categories` field are the legends for the series in the plot. This field is optional. If not provided, legends will be filled with numbers from 0 until #categories - 1.  
 
 
 
