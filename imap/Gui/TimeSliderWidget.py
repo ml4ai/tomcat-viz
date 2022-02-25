@@ -1,70 +1,11 @@
 from typing import Callable
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSlider, QStyleOptionSlider, QStyle, QToolButton
-from PyQt5.Qt import Qt, QMouseEvent, QCoreApplication, QEvent, QPoint, QTimer
 
-from imap.Gui.Utils import createLabel
+from PyQt5.Qt import Qt, QTimer
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QSlider, QStyle, QToolButton
+
 from imap.Common.Constants import Constants
 from imap.Common.Format import secondsToTime
-
-
-# class SliderCustom(QSlider):
-#
-#     def moveBackwards(self):
-#         pos = self.style().sliderPositionFromValue(self.minimum(), self.maximum(), 5, 1, False)
-#         mousePressEvent = QMouseEvent(QEvent.MouseButtonPress, pos, Qt.LeftButton, Qt.LeftButton,
-#                                       Qt.KeyboardModifier.NoModifier)
-#         QCoreApplication.sendEvent(self, mousePressEvent)
-#
-#     def moveForward(self):
-#         value = self.value() + 1
-#         style = self.style()
-#         opt = QStyleOptionSlider()
-#         self.initStyleOption(opt)
-#
-#         # the available space for the handle
-#         available = style.pixelMetric(QStyle.PM_SliderSpaceAvailable, opt, self)
-#         # the extent of the slider handle
-#         sLen = style.pixelMetric(QStyle.PM_SliderLength, opt, self) / 2
-#         posX = opt.rect.x() + self.style().sliderPositionFromValue(self.minimum(), self.maximum(), value, available, False) + sLen
-#         posY = self.height() / 2
-#         print(QPoint(posX, posY))
-#         mousePressEvent = QMouseEvent(QEvent.MouseButtonPress, QPoint(posX, posY), Qt.LeftButton, Qt.LeftButton,
-#                                       Qt.KeyboardModifier.NoModifier)
-#         QCoreApplication.sendEvent(self, mousePressEvent)
-
-    # def mousePressEvent(self, event):
-    #     print(event.pos())
-    #     if event.button() == Qt.LeftButton and not self.isSliderDown():
-    #         opt = QStyleOptionSlider()
-    #         self.initStyleOption(opt)
-    #         sliderRect = self.style().subControlRect(
-    #             QStyle.CC_Slider, opt,
-    #             QStyle.SC_SliderHandle, self)
-    #         if event.pos() not in sliderRect:
-    #             # the mouse is not over the handle, let's move it; this is based
-    #             # on the original C++ code that moves the handle when the
-    #             # "absolute button" is pressed
-    #             grooveRect = self.style().subControlRect(
-    #                 QStyle.CC_Slider, opt,
-    #                 QStyle.SC_SliderGroove, self)
-    #             center = sliderRect.center() - sliderRect.topLeft()
-    #             pos = event.pos() - center
-    #             if self.orientation() == Qt.Horizontal:
-    #                 sliderLength = sliderRect.width()
-    #                 sliderMin = grooveRect.x()
-    #                 sliderMax = grooveRect.right() - sliderLength + 1
-    #                 pos = pos.x()
-    #             else:
-    #                 sliderLength = sliderRect.height()
-    #                 sliderMin = grooveRect.y()
-    #                 sliderMax = grooveRect.bottom() - sliderLength + 1
-    #                 pos = pos.y()
-    #             value = self.style().sliderValueFromPosition(
-    #                 self.minimum(), self.maximum(), pos - sliderMin,
-    #                                                 sliderMax - sliderMin, opt.upsideDown
-    #             )
-    #             self.setSliderPosition(value)
-    #     super().mousePressEvent(event)
+from imap.Gui.Utils import createLabel
 
 
 class TimeSliderWidget(QWidget):
