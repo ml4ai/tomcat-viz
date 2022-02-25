@@ -1,11 +1,11 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QFormLayout, QLayout
 from PyQt5.Qt import Qt
 
-from imap.Gui.PlayerPanelWidget import PlayerPanelWidget
-from imap.Gui.LegendWidget import LegendWidget
-from imap.Gui.BlackoutWidget import BlackoutWidget
-from imap.Gui.Utils import createLabel, createVerticalSeparator
-from imap.Common.Constants import Constants
+from tomcat_viz.Gui.PlayerPanelWidget import PlayerPanelWidget
+from tomcat_viz.Gui.LegendWidget import LegendWidget
+from tomcat_viz.Gui.BlackoutWidget import BlackoutWidget
+from tomcat_viz.Gui.Utils import createLabel, createVerticalSeparator
+from tomcat_viz.Common.Constants import Constants
 
 
 class HeaderWidget(QWidget):

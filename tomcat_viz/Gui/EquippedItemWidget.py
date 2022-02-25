@@ -2,8 +2,8 @@ from PyQt5.Qt import Qt, QSize, QPixmap, QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 from pkg_resources import resource_string
 
-from imap.Common.Constants import Constants
-from imap.Gui.Utils import createLabel
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.Utils import createLabel
 
 
 class EquippedItemWidget(QWidget):
@@ -20,11 +20,11 @@ class EquippedItemWidget(QWidget):
     def setItem(self, item: Constants.EquippedItem):
         data, markerType = None, None
         if item == Constants.EquippedItem.HAMMER:
-            data = resource_string("imap.Resources.Images.Items", "hammer.png")
+            data = resource_string("tomcat_viz.Resources.Images.Items", "hammer.png")
         elif item == Constants.EquippedItem.MEDICAL_KIT:
-            data = resource_string("imap.Resources.Images.Items", "medical_kit.png")
+            data = resource_string("tomcat_viz.Resources.Images.Items", "medical_kit.png")
         elif item == Constants.EquippedItem.STRETCHER:
-            data = resource_string("imap.Resources.Images.Items", "stretcher.png")
+            data = resource_string("tomcat_viz.Resources.Images.Items", "stretcher.png")
         elif item == Constants.EquippedItem.NO_VICTIM:
             markerType = Constants.MarkerType.NO_VICTIM
         elif item == Constants.EquippedItem.VICTIM_A:

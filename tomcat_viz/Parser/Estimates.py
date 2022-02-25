@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from imap.Common.Constants import Constants
+from tomcat_viz.Common.Constants import Constants
 
 
 class TimeSeries:

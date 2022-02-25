@@ -3,10 +3,10 @@ from typing import Callable
 from PyQt5.Qt import QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
-from imap.Gui.CollapsiblePanel import CollapsiblePanel
-from imap.Gui.MultiTimeSeriesPlotWidget import MultiTimeSeriesPlotWidget
-from imap.Gui.Utils import createHorizontalSeparator, createVerticalSeparator
-from imap.Parser.Estimates import Estimates
+from tomcat_viz.Gui.CollapsiblePanel import CollapsiblePanel
+from tomcat_viz.Gui.MultiTimeSeriesPlotWidget import MultiTimeSeriesPlotWidget
+from tomcat_viz.Gui.Utils import createHorizontalSeparator, createVerticalSeparator
+from tomcat_viz.Parser.Estimates import Estimates
 
 
 class EstimatesWidget(QWidget):

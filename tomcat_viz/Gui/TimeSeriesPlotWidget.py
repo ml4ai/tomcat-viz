@@ -4,10 +4,10 @@ from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 from pyqtgraph import PlotWidget, mkPen, mkColor, mkBrush
 
-from imap.Common.Constants import Constants
-from imap.Common.Format import secondsToTime
-from imap.Gui.PlotLegendWidget import PlotLegendWidget
-from imap.Parser.Estimates import TimeSeries
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Common.Format import secondsToTime
+from tomcat_viz.Gui.PlotLegendWidget import PlotLegendWidget
+from tomcat_viz.Parser.Estimates import TimeSeries
 
 
 class TimeSeriesPlotWidget(QWidget):

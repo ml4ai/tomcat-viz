@@ -1,9 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
-from imap.Common.Constants import Constants
-from imap.Gui.EquippedItemWidget import EquippedItemWidget
-from imap.Gui.Utils import createLabel, createVerticalSeparator
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.EquippedItemWidget import EquippedItemWidget
+from tomcat_viz.Gui.Utils import createLabel, createVerticalSeparator
 
 
 class PlayerPanelWidget(QWidget):

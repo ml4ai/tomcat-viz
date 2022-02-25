@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout
 from PyQt5.Qt import Qt, QSize
 
-from imap.Gui.Utils import createLabel, createEmptyWidget, createStampedBlockWidget, BlockIconWidget
-from imap.Common.Constants import Constants
+from tomcat_viz.Gui.Utils import createLabel, createEmptyWidget, createStampedBlockWidget, BlockIconWidget
+from tomcat_viz.Common.Constants import Constants
 
 
 class LegendWidget(QWidget):

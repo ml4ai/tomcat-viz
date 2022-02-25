@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 
-from imap.Gui.Utils import createLabel
-from imap.Common.Constants import Constants
+from tomcat_viz.Gui.Utils import createLabel
+from tomcat_viz.Common.Constants import Constants
 
 
 class BlackoutWidget(QWidget):

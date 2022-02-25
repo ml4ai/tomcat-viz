@@ -7,11 +7,11 @@ import codecs
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import Qt, QGraphicsView, QPainterPath, QPen, QGraphicsItem
 
-from imap.Common.Format import secondsToTime
-from imap.Common.Constants import Constants
-from imap.Gui.CustomScene import CustomScene
-from imap.Parser.Map import Map
-from imap.Parser.Trial import Trial, Position, Victim
+from tomcat_viz.Common.Format import secondsToTime
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.CustomScene import CustomScene
+from tomcat_viz.Parser.Map import Map
+from tomcat_viz.Parser.Trial import Trial, Position, Victim
 
 
 class SceneObjectAction:
@@ -179,7 +179,7 @@ class MapWidget(QWidget):
             self._addedBlockItems[0].append(item)
 
     def _drawInitialVictimSignalPlates(self):
-        objects_resource = resource_stream("imap.Resources.Maps", self._trial.metadata["map_block_filename"])
+        objects_resource = resource_stream("tomcat_viz.Resources.Maps", self._trial.metadata["map_block_filename"])
         utf8_reader = codecs.getreader("utf-8")
         csv_reader = csv.reader(utf8_reader(objects_resource))
         for i, row in enumerate(csv_reader):

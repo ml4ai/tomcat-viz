@@ -2,7 +2,7 @@ from typing import List, Tuple, Collection, Any
 
 from PyQt5.QtWidgets import QTextEdit
 
-from imap.Common.Format import secondsToTime
+from tomcat_viz.Common.Format import secondsToTime
 
 
 class TextMessageWidget(QTextEdit):

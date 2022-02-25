@@ -3,10 +3,10 @@ from typing import Callable, List
 from PyQt5.QtWidgets import QVBoxLayout, QLineEdit
 from PyQt5.QtWidgets import QWidget
 
-from imap.Common.Constants import Constants
-from imap.Gui.TimeSeriesPlotWidget import TimeSeriesPlotWidget
-from imap.Gui.Utils import createHorizontalSeparator
-from imap.Parser.Estimates import TimeSeries
+from tomcat_viz.Common.Constants import Constants
+from tomcat_viz.Gui.TimeSeriesPlotWidget import TimeSeriesPlotWidget
+from tomcat_viz.Gui.Utils import createHorizontalSeparator
+from tomcat_viz.Parser.Estimates import TimeSeries
 
 
 class MultiTimeSeriesPlotWidget(QWidget):
