@@ -259,9 +259,9 @@ class Trial:
                     playerIdToColor[playerId] = playerColor
                     if playerColor == "red":
                         self.metadata["red_id"] = playerId
-                    if playerColor == "green":
+                    elif playerColor == "green":
                         self.metadata["green_id"] = playerId
-                    else:
+                    elif playerColor == "blue":
                         self.metadata["blue_id"] = playerId
             elif Trial._isMessageOf(message, "trial", "stop"):
                 # Trial finished. Nothing else to parse.
