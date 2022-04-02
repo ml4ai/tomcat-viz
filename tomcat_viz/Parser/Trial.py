@@ -103,7 +103,8 @@ class Trial:
         "observations/events/mission/perturbation",
         "observations/events/player/rubble_collapse",
         "observations/events/player/itemequipped",
-        "agent/asr/final"
+        "agent/asr/final",
+        "agent/intervention/ASI_UAZ_TA1_ToMCAT/chat"
     ]
 
     MAP_TOPIC = "ground_truth/semantic_map/initialized"
@@ -257,6 +258,8 @@ class Trial:
                     playerColor = info["callsign"].lower()
                     playerId = info["participant_id"]
                     playerIdToColor[playerId] = playerColor
+                    # Sometimes, the playername is used instead of the id
+                    playerIdToColor[info["playername"]] = playerColor
                     if playerColor == "red":
                         self.metadata["red_id"] = playerId
                     elif playerColor == "green":
@@ -338,9 +341,10 @@ class Trial:
                 elif Trial._isMessageOf(message, "chat", "Event:Chat"):
                     sender = message["data"]["sender"]
                     jsonText = json.loads(message["data"]["text"])
+                    color = jsonText["color"] if jsonText["color"] != "yellow" else "orange"
                     for playerId in message["data"]["addressees"]:
                         playerColor = playerIdToColor[playerId]
-                        chatMessage = ChatMessage(sender, playerId, jsonText["color"], jsonText["text"])
+                        chatMessage = ChatMessage(sender, playerId, color, jsonText["text"])
                         currentChatMessages[Constants.PLAYER_COLOR_MAP[playerColor].value].add(chatMessage)
 
                 elif Trial._isMessageOf(message, "event", "Event:VictimPickedUp"):
@@ -436,6 +440,13 @@ class Trial:
                     text = message["data"]["text"].strip()
                     currentSpeechTranscriptions[Constants.PLAYER_COLOR_MAP[playerColor].value].append(text)
 
+                elif Trial._isMessageOf(message, "agent", "Intervention:Chat"):
+                    sender = "ToMCAT"
+                    for playerId in message["data"]["receivers"]:
+                        playerColor = playerIdToColor[playerId]
+                        chatMessage = ChatMessage(sender, playerId, "orange", message["data"]["content"])
+                        currentChatMessages[Constants.PLAYER_COLOR_MAP[playerColor].value].add(chatMessage)
+
                 elif Trial._isMessageOf(message, "observation", "State"):
                     # Collect observations for the current time step
                     missionTimer = message["data"]["mission_timer"]
@@ -502,11 +513,11 @@ class Trial:
                         groundTruthMessagesMap["map"] = jsonMessage
                     elif jsonMessage["topic"] == Trial.VICTIM_LIST_TOPIC:
                         groundTruthMessagesMap["victim_list"] = jsonMessage
-                    if jsonMessage["topic"] == Trial.RUBBLE_LIST_TOPIC:
+                    elif jsonMessage["topic"] == Trial.RUBBLE_LIST_TOPIC:
                         groundTruthMessagesMap["rubble_list"] = jsonMessage
-                    if jsonMessage["topic"] == Trial.THREAT_PLATE_LIST_TOPIC:
+                    elif jsonMessage["topic"] == Trial.THREAT_PLATE_LIST_TOPIC:
                         groundTruthMessagesMap["threat_plate_list"] = jsonMessage
-                    if jsonMessage["topic"] == Trial.VICTIM_SIGNAL_PLATE_LIST_TOPIC:
+                    elif jsonMessage["topic"] == Trial.VICTIM_SIGNAL_PLATE_LIST_TOPIC:
                         groundTruthMessagesMap["victim_signal_plate_list"] = jsonMessage
                     elif jsonMessage["topic"] in Trial.USED_TOPICS:
                         messages.append(jsonMessage)
