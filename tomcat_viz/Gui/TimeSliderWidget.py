@@ -24,6 +24,7 @@ class TimeSliderWidget(QWidget):
 
     def setTimeSteps(self, timeSteps: int):
         self._timeSlider.setRange(0, timeSteps - 1)
+        self._updateTimerLabel(0)
 
     def reset(self):
         self._timeSlider.setValue(0)
@@ -106,4 +107,5 @@ class TimeSliderWidget(QWidget):
             self._onPlayPause()
 
     def _updateTimerLabel(self, timeStep: int):
-        self._timerLabel.setText(secondsToTime(timeStep))
+        time = f"{secondsToTime(timeStep)} | {secondsToTime(self._timeSlider.maximum() + 1 - timeStep)}"
+        self._timerLabel.setText(time)

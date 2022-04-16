@@ -113,6 +113,9 @@ class Trial:
     THREAT_PLATE_LIST_TOPIC = "ground_truth/mission/threatsign_list"
     VICTIM_SIGNAL_PLATE_LIST_TOPIC = "ground_truth/mission/freezeblock_list"
 
+    AGENT_NAME = "ASI_UAZ_TA1_ToMCAT"
+    AGENT_ALIAS = "ToMCAT"
+
     def __init__(self, timeSteps: int = 900):
         self.timeSteps = timeSteps
 
@@ -441,7 +444,7 @@ class Trial:
                     currentSpeechTranscriptions[Constants.PLAYER_COLOR_MAP[playerColor].value].append(text)
 
                 elif Trial._isMessageOf(message, "agent", "Intervention:Chat"):
-                    sender = "ToMCAT"
+                    sender = Trial.AGENT_ALIAS
                     for playerId in message["data"]["receivers"]:
                         playerColor = playerIdToColor[playerId]
                         chatMessage = ChatMessage(sender, playerId, "orange", message["data"]["content"])
@@ -520,6 +523,10 @@ class Trial:
                     elif jsonMessage["topic"] == Trial.VICTIM_SIGNAL_PLATE_LIST_TOPIC:
                         groundTruthMessagesMap["victim_signal_plate_list"] = jsonMessage
                     elif jsonMessage["topic"] in Trial.USED_TOPICS:
+                        messages.append(jsonMessage)
+                else:
+                    # Intervention messages generated locally don't have the topic field.
+                    if "source" in jsonMessage["msg"] and jsonMessage["msg"]["source"] == Trial.AGENT_NAME:
                         messages.append(jsonMessage)
 
         self._parseGroundTruthMessages(groundTruthMessagesMap)
