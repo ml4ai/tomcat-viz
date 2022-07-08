@@ -134,7 +134,7 @@ class CustomScene(QGraphicsScene):
         item = QGraphicsEllipseItem((x + 0.5) * scale - radius, (y + 0.5) * scale - radius, 2 * radius, 2 * radius)
         span = 45
         start_angle = (270 - yaw - (span / 2)) % 360
-        item.setStartAngle(start_angle * 16)
+        item.setStartAngle(int(start_angle * 16))
         item.setSpanAngle(span * 16)
         item.setPen(pen)
         item.setBrush(brush)
