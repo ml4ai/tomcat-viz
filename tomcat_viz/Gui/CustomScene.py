@@ -109,7 +109,7 @@ class CustomScene(QGraphicsScene):
         brush = QBrush(color, Qt.SolidPattern)
         rectItem = self.addRect(x * scale + 1, y * scale + 1, blockSize - 1, blockSize - 1, pen, brush)
 
-        textItem = self.addText(text, QFont('Arial', 100 / blockSize))
+        textItem = self.addText(text, QFont('Arial', int(100 / blockSize)))
         textItem.setDefaultTextColor(textColor)
         textItem.setPos((x - 2 / blockSize) * scale, (y - 4.5 / blockSize) * scale)
         return StampedRectItem(rectItem, textItem)
