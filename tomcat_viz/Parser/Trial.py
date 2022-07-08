@@ -424,7 +424,7 @@ class Trial:
 
                 elif Trial._isMessageOf(message, "event", "Event:Perturbation"):
                     if message["data"]["type"].lower() == "blackout":
-                        currentActiveBlackout = message["data"]["state"].lower() == "start"
+                        currentActiveBlackout = message["data"]["mission_state"].lower() == "start"
 
                 elif Trial._isMessageOf(message, "event", "Event:RubbleCollapse"):
                     # How many are stacked on top of each other

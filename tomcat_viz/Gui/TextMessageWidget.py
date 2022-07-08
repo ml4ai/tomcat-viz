@@ -49,6 +49,8 @@ class TextMessageWidget(QTextEdit):
         self._greenMessages = greenMessages
         self._blueMessages = blueMessages
         self._lastDrawnTimeStep = 0
+        self._htmlTableLines = []
+        self._numTableLinesPerTime = []
 
     def _getHtmlContent(self):
         tableHtml = f"<table>{''.join(self._htmlTableLines)}</table>" if len(self._htmlTableLines) > 0 else ""
